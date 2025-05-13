@@ -1,0 +1,92 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Copias Seguridad{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Listado de Copias de Seguridad</h2>
+
+    {% if archivos %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Nombre del archivo</th>
+                    <th scope="col">Fecha de creación</th>
+                    <th scope="col" class="text-center">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="copiasTableBody">
+                {% for archivo in archivos %}
+                <tr>
+                    <td>{{ archivo.nombre }}</td>
+                    <td>{{ archivo.fecha }}</td>
+                    <td class="text-center">
+                        <a href="{{ url_for('copias.descargar_copia', nombre_archivo=archivo.nombre) }}" class="btn btn-sm btn-primary">
+                            Descargar
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center mt-3" id="pagination"></ul>
+    </nav>
+
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        No hay copias de seguridad disponibles.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    let itemsPorPagina = 10;
+    let tabla = document.querySelector("#copiasTableBody");
+    let filas = Array.from(tabla.getElementsByTagName("tr"));
+    let paginacion = document.querySelector("#pagination");
+
+    function mostrarPagina(pagina) {
+        let inicio = (pagina - 1) * itemsPorPagina;
+        let fin = inicio + itemsPorPagina;
+        filas.forEach((fila, index) => {
+            fila.style.display = (index >= inicio && index < fin) ? "" : "none";
+        });
+    }
+
+    function generarPaginacion() {
+        let totalPaginas = Math.ceil(filas.length / itemsPorPagina);
+        paginacion.innerHTML = "";
+        if (totalPaginas <= 1) return;
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            let li = document.createElement("li");
+            li.className = "page-item";
+            let a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.innerText = i;
+            a.onclick = function () {
+                mostrarPagina(i);
+                document.querySelectorAll("#pagination .page-item").forEach(item => item.classList.remove("active"));
+                li.classList.add("active");
+                return false;
+            };
+            li.appendChild(a);
+            paginacion.appendChild(li);
+        }
+
+        if (paginacion.firstChild) {
+            paginacion.firstChild.classList.add("active");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        generarPaginacion();
+        mostrarPagina(1);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<h2>Buscar Comprobantes de Reservas</h2>
+<input type="text" id="busqueda" class="form-control" placeholder="Buscar comprobante..." autocomplete="off">
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody id="resultados">
+        {% for comprobante in comprobantes %}
+        {% if comprobante.comprobante_pago and comprobante.comprobante_path %}
+        <tr>
+            <td>{{ comprobante.comprobante_pago }}</td>
+            <td>
+                {% if comprobante.comprobante_path %}
+                <a href="{{ url_for('comprobantes.descargar_comprobante', comprobante_path=comprobante.comprobante_path) }}"
+                    class="btn btn-success">
+                    Descargar
+                </a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    document.getElementById("busqueda").addEventListener("keyup", function () {
+        let query = this.value.trim();
+
+        fetch(`/admin/comprobantes/buscar?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Datos recibidos:", data);  // Depuración
+                let tabla = document.getElementById("resultados");
+                tabla.innerHTML = "";
+
+                if (data.length === 0) {
+                    tabla.innerHTML = "<tr><td colspan='2'>No se encontraron resultados</td></tr>";
+                    return;
+                }
+
+                data.forEach(comprobante => {
+                    let fila = `<tr>
+                <td>${comprobante.comprobante_pago}</td>
+                <td>
+                    <a href="/admin/comprobantes/descargar/${comprobante.comprobante_path}" class="btn btn-success">
+                        Descargar
+                    </a>
+                </td>
+            </tr>`;
+                    tabla.innerHTML += fila;
+                });
+            })
+            .catch(error => console.error("Error en la búsqueda:", error));
+
+    });
+</script>
+
+
+{% endblock %}

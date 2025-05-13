@@ -1,0 +1,114 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-primary">Agregar Nuevo Apartamento</h2>
+        
+        <form method="POST" onsubmit="return validarFormulario()">
+            <div class="mb-3">
+                <label for="numero" class="form-label fw-bold">Número del Apartamento</label>
+                <input type="text" id="numero" name="numero" class="form-control border-primary">
+                <div class="invalid-feedback">Por favor, ingresa el número del apartamento.</div>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-success w-50">Crear</button>
+                <a href="{{ url_for('config.nueva_casa') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-primary">Lista de Apartamentos</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th class="text-center">Número</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for apartamento in apartamentos %}
+                <tr>
+                    <td class="text-center">{{ apartamento.id }}</td>
+                    <td class="text-center">{{ apartamento.numero }}</td>
+                    <td class="text-center">
+                        <a href="{{ url_for('config.editar_apartamento', id=apartamento.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                        <button class="btn btn-danger btn-sm" onclick="confirmarEliminacion( apartamento.id )">Eliminar</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar este apartamento? Esta acción no se puede deshacer.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminar" method="POST">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function validarFormulario() {
+        let valido = true;
+        let campo = document.getElementById("numero");
+        let error = campo.nextElementSibling;
+        
+        if (campo.value.trim() === "") {
+            campo.classList.add("is-invalid");
+            error.style.display = "block";
+            valido = false;
+            
+            setTimeout(() => {
+                campo.classList.remove("is-invalid");
+                error.style.display = "none";
+            }, 3000);
+        } else {
+            campo.classList.remove("is-invalid");
+            error.style.display = "none";
+        }
+        
+        return valido;
+    }
+
+    function confirmarEliminacion(id) {
+        let form = document.getElementById("formEliminar");
+        form.action = `{{ url_for('config.eliminar_apartamento', id=0) }}`.replace('0', id);
+        let modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
+        modal.show();
+    }
+</script>
+
+<style>
+    .fade-out {
+        opacity: 0;
+        transition: opacity 0.5s ease-out;
+    }
+    .invalid-feedback {
+        display: none;
+    }
+    .card {
+        border-radius: 15px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}

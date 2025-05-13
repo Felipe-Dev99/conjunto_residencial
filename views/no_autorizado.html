@@ -1,0 +1,18 @@
+{% if usuario.id_rol == 1%}
+{% extends "base_usuario.html" %}
+{% else %}
+{% extends "base_admin.html" %}
+{% endif %}
+{% block title %}Editar Datos{% endblock %}
+
+{% block content %}
+<div class="text-center mt-5">
+    <h1 class="text-danger">Error 403: No autorizado</h1>
+    <p class="lead">No tienes permiso para acceder a este recurso.</p>
+    {% if usuario.id_rol == 1%}
+    <a href="{{ url_for('main.home_usuario') }}" class="btn btn-primary mt-3">Volver a la página principal</a>
+    {% else %}
+    <a href="{{ url_for('main.home_admin') }}" class="btn btn-primary mt-3">Volver a la página principal</a>
+    {% endif %}
+</div>
+{% endblock %}

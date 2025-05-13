@@ -1,0 +1,154 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Búsqueda en Archivos Static</h2>
+        <!-- Botón Volver -->
+        <div class="text mt-4">
+            <a href="{{ url_for('config.configuracion') }}" class="btn btn-secondary">Volver</a>
+        </div>
+
+    <!-- Formulario de Búsqueda Avanzada -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Filtros de Búsqueda</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('comprobantes.listar_comprobantes') }}">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label for="nombre_archivo" class="form-label">Nombre del archivo</label>
+                        <input type="text" class="form-control" id="nombre_archivo" name="nombre_archivo"
+                            placeholder="Ej: factura, reporte..." value="{{ termino_busqueda }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="extension" class="form-label">Extensión</label>
+                        <input type="text" class="form-control" id="extension" name="extension"
+                            placeholder="Ej: pdf, jpg" value="{{ extension_busqueda }}">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        <a href="{{ url_for('comprobantes.listar_comprobantes') }}" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    {% if archivos %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Resultados ({{ paginacion.total_archivos }} archivos)</h5>
+            {% if paginacion.total_paginas > 1 %}
+            <div class="pagination-info">
+                Página {{ paginacion.pagina_actual }} de {{ paginacion.total_paginas }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Directorio</th>
+                            <th>Tamaño</th>
+                            <th>Modificación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for archivo in archivos %}
+                        <tr>
+                            <td>{{ archivo.nombre }}</td>
+                            <td>{{ archivo.directorio }}</td>
+                            <td>{{ archivo.tamaño|filesizeformat }}</td>
+                            <td>{{ archivo.modificacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ archivo.ruta_segura }}" target="_blank" class="btn btn-outline-primary"
+                                        title="Ver archivo">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/{{ archivo.ruta }}" download class="btn btn-outline-success"
+                                        title="Descargar">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    {% if paginacion.total_paginas > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if paginacion.pagina_actual > 1 %}
+            <li class="page-item">
+                <a class="page-link"
+                    href="{{ url_for('comprobantes.listar_comprobantes', pagina=paginacion.pagina_actual-1, nombre_archivo=termino_busqueda, extension=extension_busqueda) }}">
+                    &laquo; Anterior
+                </a>
+            </li>
+            {% endif %}
+
+            {% for page_num in range(1, paginacion.total_paginas + 1) %}
+            <li class="page-item {% if page_num == paginacion.pagina_actual %}active{% endif %}">
+                <a class="page-link"
+                    href="{{ url_for('comprobantes.listar_comprobantes', pagina=page_num, nombre_archivo=termino_busqueda, extension=extension_busqueda) }}">
+                    {{ page_num }}
+                </a>
+            </li>
+            {% endfor %}
+
+            {% if paginacion.pagina_actual < paginacion.total_paginas %} <li class="page-item">
+                <a class="page-link"
+                    href="{{ url_for('comprobantes.listar_comprobantes', pagina=paginacion.pagina_actual+1, nombre_archivo=termino_busqueda, extension=extension_busqueda) }}">
+                    Siguiente &raquo;
+                </a>
+                </li>
+                {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% elif termino_busqueda or extension_busqueda %}
+    <div class="alert alert-info">
+        No se encontraron archivos con los criterios especificados.
+    </div>
+    {% else %}
+    <div class="alert alert-secondary">
+        Ingrese términos de búsqueda para encontrar archivos.
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- En tu base_admin.html -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JavaScript para funcionalidad adicional -->
+<script>
+    // Clipboard.js para copiar rutas
+    document.addEventListener('DOMContentLoaded', function () {
+        new ClipboardJS('.btn-copy');
+
+        // Mostrar tooltips
+        $('[title]').tooltip();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Lista de unidades residenciales</h2>
+    <a href="{{ url_for('config.nueva_casa') }}" class="btn btn-primary mb-3">Nueva unidad residencial</a>
+
+    <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Torre</th>
+                <th>Apartamento</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="casasTableBody">
+            {% for casa in casas %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ casa.torre.nombre }}</td>
+                <td>{{ casa.apartamento.numero }}</td>
+                <td>
+                    <a href="{{ url_for('config.editar_casa', id=casa.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-id="{{ casa.id }}">Eliminar</button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-muted">No hay unidades residenciales registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Paginación -->
+    <nav>
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+    </nav>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Seguro que deseas eliminar esta unidad residencial?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Volver -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('config.configuracion') }}" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+<script>
+    let itemsPorPagina = 5;
+    let tabla = document.querySelector("#casasTableBody");
+    let filas = Array.from(tabla.getElementsByTagName("tr"));
+    let paginacion = document.querySelector("#pagination");
+
+    function mostrarPagina(pagina) {
+        let inicio = (pagina - 1) * itemsPorPagina;
+        let fin = inicio + itemsPorPagina;
+        filas.forEach((fila, index) => {
+            fila.style.display = (index >= inicio && index < fin) ? "" : "none";
+        });
+    }
+
+    function generarPaginacion() {
+        let totalPaginas = Math.ceil(filas.length / itemsPorPagina);
+        paginacion.innerHTML = "";
+        if (totalPaginas <= 1) return;
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            let li = document.createElement("li");
+            li.className = "page-item";
+            let a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.innerText = i;
+            a.onclick = function () {
+                mostrarPagina(i);
+                document.querySelectorAll('.pagination .page-item').forEach(el => el.classList.remove('active'));
+                li.classList.add('active');
+                return false;
+            };
+            li.appendChild(a);
+            paginacion.appendChild(li);
+        }
+
+        // Activa la primera página
+        paginacion.querySelector('li').classList.add('active');
+    }
+
+    // Inicializar paginación al cargar
+    document.addEventListener("DOMContentLoaded", () => {
+        generarPaginacion();
+        mostrarPagina(1);
+    });
+
+    // Modal de confirmación
+    document.addEventListener("DOMContentLoaded", function () {
+        var confirmDeleteModal = document.getElementById("confirmDeleteModal");
+        confirmDeleteModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+            var casaId = button.getAttribute("data-id");
+            var form = document.getElementById("deleteForm");
+            form.action = "{{ url_for('config.eliminar_casa', id=0) }}".replace('0', casaId);
+        });
+    });
+</script>
+{% endblock %}

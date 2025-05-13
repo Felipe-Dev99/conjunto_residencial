@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Conjunto Residencial El Dorado{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <style>
+        /* 🔹 Estilo global para sticky footer */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 🔹 Contenedor principal que empuja el footer hacia abajo */
+        .main-content {
+            flex: 1;
+        }
+
+        .navbar {
+            background-color: #d6b456 !important;
+            border-radius: 12px;
+            margin: 10px;
+            padding: 12px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: clamp(1rem, 4vw, 1.3rem);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nav-link {
+            font-size: 1rem;
+            font-weight: 500;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .nav-link:hover {
+            color: #ffffff !important;
+        }
+
+        .container-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .navbar-text {
+            font-size: 1rem;
+            color: rgb(0, 0, 0);
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .nav-logout {
+            color: #080000 !important;
+        }
+
+        footer {
+            background-color: #d6b456 !important;
+            color: #000;
+            text-align: center;
+            padding: 15px;
+        }
+
+        footer p {
+            margin: 0;
+        }
+
+        .footer-nav a {
+            color: #000;
+            text-decoration: none;
+        }
+
+        .footer-nav a:hover {
+            text-decoration: underline;
+        }
+
+        footer.footer-nav {
+            background-color: #d6b456;
+            color: #000;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+
+        @media (max-width: 576px) {
+            footer.footer-nav {
+                font-size: 0.85rem;
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar con el rol de Residente -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/usuario">🏠 {{ datos.nombre if datos else 'Nombre del Conjunto'}}</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/usuario' %}active{% endif %}"
+                            href="/usuario">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/reserva/' %}active{% endif %}"
+                            href="/reserva/">Reservas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/pqrs/' %}active{% endif %}" href="/pqrs/">PQRS</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/facturacion/' %}active{% endif %}" href="{{ url_for('facturacion.listar_facturas') }}">Pagos de Administración</a>
+                    </li>
+                    <li class="nav-item">
+                    <a class="nav-link ms-auto text-light" href="{{ url_for('usuarios.editar_datos', id=current_user.id)}}">
+                        🏬 {{ current_user.nombre.title().split()[:2] | join(' ') }}
+                    </a>
+                    </li>
+                </ul>
+
+                
+                 <a class="nav-link nav-logout text-danger" href="/logout">Cerrar Sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido dinámico dentro del área principal -->
+    <div class="container main-content">
+        <div class="container-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="footer-nav mt-auto">
+        <div class="container py-3">
+            <div class="row text-center text-md-start">
+                <div class="col-12 col-md-6 mb-2 mb-md-0">
+                    <p class="mb-1 fw-semibold">&copy; 2025 {{ datos.nombre if datos else 'Nombre del Conjunto'}}</p>
+                    <p class="mb-0">Todos los derechos reservados.</p>
+                </div>
+                <div class="col-12 col-md-6">
+                    <p class="mb-1">📍 {{ datos.direccion if datos else 'Direccion del Conjunto' }}</p>
+                    <p class="mb-0">📞 Tel: +57 {{ datos.telefono if datos else 'Telefono del Conjunto'}}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Descripción de PQRS</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="tipo" class="form-label">Tipo</label>
+            <input type="text" id="tipo" name="tipo" class="form-control" value="{{ descripcion_pqrs.tipo }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea id="descripcion" name="descripcion" class="form-control" required>{{ descripcion_pqrs.descripcion }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="id_tipo" class="form-label">Tipo de PQRS</label>
+            <select id="id_tipo" name="id_tipo" class="form-control" required>
+                {% for tipo in tipos_pqrs %}
+                <option value="{{ tipo.id }}" {% if tipo.id == descripcion_pqrs.id_tipo %}selected{% endif %}>{{ tipo.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Actualizar</button>
+        <a href="{{ url_for('config.listar_descripciones') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow p-4">
+        <h2 class="text-center text-primary mb-4">📄 Generar Reportes</h2>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="text mt-4">
+            <a href="{{ url_for('config.configuracion') }}" class="btn btn-secondary">Volver</a>
+        </div>
+
+        <form method="POST">
+            <div class="row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <!-- Selección del tipo de reporte -->
+                    <div class="mb-3">
+                        <label for="tipo_reporte" class="form-label fw-bold">Tipo de reporte:</label>
+                        <select name="tipo_reporte" id="tipo_reporte" class="form-select" required>
+                            <option value="" selected disabled>-- Seleccione --</option>
+                            <option value="reservas">📅 Reservas</option>
+                            <option value="pqrs">📨 PQRS</option>
+                            <option value="facturacion">💰 Pagos de Administración</option>
+                            <option value="usuarios">👥 Usuarios</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro para estado de reservas -->
+                    <div id="filtro_reservas" class="mb-3 d-none">
+                        <label for="estado_reserva" class="form-label">Estado de la Reserva:</label>
+                        <select name="filtro_reservas" id="filtro_reservas" class="form-select">
+                            <option value="confirmadas">✅ Confirmadas</option>
+                            <option value="pendientes">⏳ En espera de aprobación</option>
+                            <option value="canceladas">❌ Canceladas</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro para estado de PQRS -->
+                    <div id="tipo_pqrs" class="mb-3 d-none">
+                        <label for="estadot_pqrs" id="tipo_pqrs" class="form-label">Tipo de la PQRS:</label>
+                        <select name="tipo_pqrs" class="form-select">
+                            <option value="1">📥 Peticion</option>
+                            <option value="2">❎ Queja</option>
+                            <option value="3">✅ Reclamos</option>
+                            <option value="4">🔄 Sugerencias</option>
+                            <option value="5">✅ Felicitaciones</option>
+                        </select>
+                    </div>
+
+                    <div id="filtro_pqrs" class="mb-3 d-none">
+                        <label for="estado_pqrs" id="filtro_pqrs" class="form-label">Estado de la PQRS:</label>
+                        <select name="filtro_pqrs" class="form-select">
+                            <option value="registradas">📥 Registradas</option>
+                            <option value="en_proceso">🔄 En Proceso</option>
+                            <option value="finalizadas">✅ Finalizadas</option>
+                            <option value="Vencidas">❎ Vencidas</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro para Pagos de administración -->
+                    <div id="filtro_facturacion" class="mb-3 d-none">
+                        <label for="estado_factura" id="filtro_facturacion" class="form-label">Estado del
+                            Pago:</label>
+                        <select id="filtro_facturacionn" name="filtro_facturacion" class="form-select">
+                            <option value="en_mora">💸 Deudores</option>
+                            <option value="al_dia">✔️ Al Día</option>
+                            <option value="por_unidad">🏠 Por Unidad Residencial</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro para usuarios -->
+                    <div id="filtro_usuarios" class="mb-3 d-none">
+                        <label for="filtro_usuario_tipo" class="form-label">Filtro de Usuarios:</label>
+                        <select name="filtro_usuario_tipo" id="filtro_usuario_tipo" class="form-select">
+                            <option value="">-- Seleccione --</option>
+                            <option value="habilitados">🟢 Usuarios Habilitados</option>
+                            <option value="inhabilitados">🔴 Usuarios Inhabilitados</option>
+                            <option value="por_rol">👥 Por Rol</option>
+                        </select>
+                    </div>
+
+                    <!-- Subfiltro: seleccionar rol -->
+                    <div id="filtro_rol" class="mb-3 d-none">
+                        <label for="rol_id" class="form-label">Seleccione un Rol:</label>
+                        <select name="rol_id" id="rol_id" class="form-select">
+                            <option value="">-- Seleccione un rol --</option>
+                            {% for rol in roles %}
+                            <option value="{{ rol.id }}">{{ rol.nombre }}</option>
+                            {% else %}
+                            <option disabled>No hay roles registrados</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Filtro por unidad residencial -->
+                    <div id="filtro_unidad" class="mt-3 d-none ">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="torre_id" class="form-label">Torre:</label>
+                                <select name="torre_id" id="torre_id" class="form-select">
+                                    <option value="">Todas</option>
+                                    {% for torre in torres %}
+                                    <option value="{{ torre.id }}">{{ torre.nombre }}</option>
+                                    {% else %}
+                                    <li>No hay torres</li>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="apartamento_id" class="form-label">Apartamento:</label>
+                                <select name="apartamento_id" id="apartamento_id" class="form-select">
+                                    <option value="">Todas</option>
+                                    {% for apt in apartamentos %}
+                                    <option value="{{ apt.id }}">{{ apt.numero }}</option>
+                                    {% else %}
+                                    <li>No hay apartamentos</li>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Filtro por fecha -->
+                    <div class="mb-3">
+                        <label for="fecha_inicio" class="form-label">Desde:</label>
+                        <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fecha_fin" class="form-label">Hasta:</label>
+                        <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" required>
+                    </div>
+
+                    <!-- Formato de exportación -->
+                    <div class="mb-3">
+                        <label for="tipo_export" class="form-label fw-bold">Formato de exportación:</label>
+                        <select class="form-select" id="tipo_export" name="export" required>
+                            <option value="" selected>-- Seleccione --</option> <!-- Solo quité disabled -->
+                            <option value="pdf">📄 PDF</option>
+                            <option value="excel">📊 Excel</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Generar Reporte</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tipoSelect = document.getElementById("tipo_reporte");
+        const estadoFacturaSelect = document.getElementById("filtro_facturacionn");
+        const filtroUnidad = document.getElementById("filtro_unidad");
+        const filtroReservas = document.getElementById("filtro_reservas");
+        const filtroPQRS = document.getElementById("filtro_pqrs");
+        const tipoPQRS = document.getElementById("tipo_pqrs");
+        const filtroFacturacion = document.getElementById("filtro_facturacion");
+        const filtroUsuarios = document.getElementById("filtro_usuarios");
+        const filtroRol = document.getElementById("filtro_rol");
+        const filtroUsuarioTipo = document.getElementById("filtro_usuario_tipo");
+        const filtroUnidadTipo = document.getElementById("rol_id");
+
+        // Ocultar todos los filtros
+        function ocultarFiltros() {
+            filtroReservas.classList.add("d-none");
+            filtroPQRS.classList.add("d-none");
+            tipoPQRS.classList.add("d-none");
+            filtroFacturacion.classList.add("d-none");
+            filtroUnidad.classList.add("d-none");
+            filtroUsuarios.classList.add("d-none");
+            filtroRol.classList.add("d-none");
+        }
+
+        // Mostrar filtros según tipo de reporte
+        tipoSelect.addEventListener("change", function () {
+            const tipo = this.value;
+            ocultarFiltros();
+
+            if (tipo === "reservas") {
+                filtroReservas.classList.remove("d-none");
+                filtroUnidad.classList.remove("d-none");
+            } else if (tipo === "pqrs") {
+                filtroPQRS.classList.remove("d-none");
+                tipoPQRS.classList.remove("d-none");
+                filtroUnidad.classList.remove("d-none");
+            } else if (tipo === "facturacion") {
+                filtroFacturacion.classList.remove("d-none");
+
+                // Esperamos un momento para que el DOM actualice el select
+                setTimeout(() => {
+                    if (estadoFacturaSelect.value === "por_unidad") {
+                        filtroUnidad.classList.remove("d-none");
+                    }
+                }, 10);
+            }
+            else if (tipo === "usuarios") {
+                filtroUsuarios.classList.remove("d-none");
+                filtroUnidad.classList.remove("d-none");
+
+                // Verificamos si la opción "por_unidad" ya está seleccionada
+                if (filtroUsuarioTipo.value === "por_rol") {
+                    filtroRol.classList.remove("d-none");
+
+
+                    if (filtroUnidadTipo.value === "1") {
+                        filtroUnidad.classList.remove("d-none");
+                    }
+                }
+            }
+        });
+
+        // Mostrar u ocultar filtro por unidad residencial
+        estadoFacturaSelect.addEventListener("change", function () {
+            if (this.value === "por_unidad") {
+                filtroUnidad.classList.remove("d-none");
+            } else {
+                filtroUnidad.classList.add("d-none");
+            }
+        });
+
+        filtroUsuarioTipo.addEventListener("change", function () {
+            if (this.value === "por_rol") {
+                filtroRol.classList.remove("d-none");
+            } else {
+                filtroRol.classList.add("d-none");
+            }
+        });
+
+        filtroUnidadTipo.addEventListener("change", function () {
+            if (this.value === "1") {
+                filtroUnidad.classList.remove("d-none");
+            } else {
+                filtroUnidad.classList.add("d-none");
+            }
+        });
+    });
+
+    // Esperar a que la página cargue completamente
+    document.addEventListener("DOMContentLoaded", function () {
+        // Seleccionar todas las alertas
+        const alerts = document.querySelectorAll(".alert");
+
+        // Configurar el tiempo de desaparición (en milisegundos)
+        const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+        alerts.forEach(alert => {
+            // Configurar un temporizador para eliminar la alerta
+            setTimeout(() => {
+                alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+                setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+            }, tiempoDesaparicion);
+        });
+    });
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Responder PQRS</h2>
+
+    <!-- Mensajes de alerta -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('admin_pqrs.responder_pqrs', id=pqrs.id) }}">
+
+        <a href="{{ url_for('pqrs.descargar_pdf_pqrs', id_pqrs=pqrs.id) }}" class="btn btn-warning">
+            📦 Descargar Comprobante PQRS
+        </a>
+
+        <div class="mb-3">
+            <label class="form-label"><strong>Radicado:</strong></label>
+            <input type="text" class="form-control" value="{{ pqrs.numero_radicado }}" disabled>
+        </div>
+        <div class="mb-3">
+            <label class="form-label"><strong>Usuario:</strong></label>
+            <input type="text" class="form-control" value="{{ pqrs.usuario.nombre }}" disabled>
+        </div>
+        <div class="mb-3">
+            <label class="form-label"><strong>Unidad Residencial:</strong></label>
+            <input type="text" class="form-control"
+                value="Torre: {{ pqrs.usuario.casa.torre.nombre }} - Apart: {{ pqrs.usuario.casa.apartamento.numero }}"
+                disabled>
+        </div>
+        <div class="mb-3">
+            <label class="form-label"><strong>Tipo de PQRS:</strong></label>
+            <input type="text" class="form-control" value="{{ pqrs.tipo_p.nombre }}" disabled>
+        </div>
+        <div class="mb-3">
+            <label class="form-label"><strong>Descripción:</strong></label>
+            <textarea class="form-control" rows="4" disabled>{{ pqrs.tipo_d.descripcion }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label"><strong>Observación:</strong></label>
+            <textarea class="form-control" rows="2" disabled>{{ pqrs.observacion }}</textarea>
+        </div>
+        {% if archivos %}
+        <h5>Archivos adjuntos:</h5>
+        <ul class="list-group">
+            {% for archivo in archivos %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ archivo.nombre_original }}
+                <a href="{{ url_for('admin_pqrs.descargar_archivo', id_archivo=archivo.id) }}"
+                    class="btn btn-sm btn-success">
+                    <i class="fas fa-download"></i> Descargar
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% if pqrs.id_estado != 4 %}
+        <div class="mb-3">
+            <td>
+                {% if "Asignar PQRS" in permisos_usuario %}
+                <a href="{{ url_for('admin_pqrs.asignar_pqrs', id=pqrs.id) }}"
+                    class="btn btn-warning btn-sm">Asignar</a>
+                {% endif %}
+            </td>
+        </div>
+        {% endif %}
+
+        {% if historial %}
+        <div class="card mt-4">
+            <div class="card-header" style="background-color: #d6b456;">
+                <h5 class="mb-0 text-white">📋 Historial PQRS</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="text-white" style="background-color: #d6b456;">
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th>📅 Fecha</th>
+                                <th>👨‍💼 Usuario</th>
+                                <th>📝 Respuesta</th>
+                                <th>📌 Estado Actual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in historial %}
+                            <tr>
+                                <td class="text-center">{{ loop.index }}</td>
+                                <td>{{ item.fecha_respuesta }}</td>
+                                <td>{{ item.usuario }}</td>
+                                <td>{{ item.respuesta }}</td>
+                                <td>{{ item.estado_actual }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="mt-4">
+            <h5 class="mb-2">📋 Historial PQRS</h5>
+            <p><em>Aún no hay respuesta.</em></p>
+        </div>
+        {% endif %}
+
+
+
+        {% if pqrs.id_estado != 4 %}
+        <div class="mb-3">
+            <label for="estado" class="form-label">Estado:</label>
+            <select class="form-select" id="estado" name="estado" required>
+                {% for estado in estados %}
+                <option value="{{ estado.id }}" {% if estado.id==pqrs.id_estado %}selected{% endif %}>{{ estado.nombre
+                    }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+
+        <div class="mb-3">
+            <label class="form-label"><strong>Responder PQRS:</strong></label>
+            <textarea name="respuesta" class="form-control" rows="4"
+                required> {{ pqrs.respuesta if pqrs.respuesta is not none else '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Enviar Respuesta</button>
+        {% endif %}
+        <a href="{{ url_for('admin_pqrs.listar') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<script>
+  // Esperar a que la página cargue completamente
+  document.addEventListener("DOMContentLoaded", function () {
+    // Seleccionar todas las alertas
+    const alerts = document.querySelectorAll(".alert");
+
+    // Configurar el tiempo de desaparición (en milisegundos)
+    const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+    alerts.forEach(alert => {
+      // Configurar un temporizador para eliminar la alerta
+      setTimeout(() => {
+        alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+        setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+      }, tiempoDesaparicion);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base_usuario.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Detalles de PQRS</h2>
+
+    <!-- Mensajes de alerta -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-header">
+            <strong>Número de Radicado:</strong> {{ pqrs.numero_radicado }}
+        </div>
+        <div class="card-body">
+            <p><strong>Fecha de Creación:</strong> {{ pqrs.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+            <p><strong>Solicitud:</strong> {{ pqrs.tipo_p.nombre }}</p>
+            <p><strong>Tipo:</strong> {{ pqrs.tipo_d.tipo }}</p>
+            <p><strong>Descripcion:</strong> {{ pqrs.tipo_d.descripcion }}</p>
+            <p><strong>Observación:</strong> {{ pqrs.observacion }}</p>
+            <p><strong>Estado:</strong> <span class="badge bg-info">{{ pqrs.estado.nombre }}</span></p>
+            <p><strong>Fecha Máxima de Respuesta:</strong> {{ pqrs.fecha_max.strftime('%Y-%m-%d') }}</p>
+
+
+            {% if archivos %}
+            <h5>Archivos adjuntos:</h5>
+            <ul class="list-group">
+                {% for archivo in archivos %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ archivo.nombre_original }}
+                    <a href="{{ url_for('pqrs.descargar_archivo', id_archivo=archivo.id) }}"
+                        class="btn btn-sm btn-success">
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+
+
+
+            {% if pqrs.id_estado != 1 %}
+            <div class="card mt-4">
+                <div class="card-header" style="background-color: #101010;;">
+                    <h5 class="mb-0 text-white">📋 Historial PQRS</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="text-white" style="background-color: #101010;;">
+                                <tr>
+                                    <th class="text-center">#</th>
+                                    <th>📅 Fecha</th>
+                                    
+                                    <th>📝 Respuesta</th>
+                                    <th>📌 Estado Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in historial %}
+                                <tr>
+                                    <td class="text-center">{{ loop.index }}</td>
+                                    <td>{{ item.fecha_respuesta }}</td>
+                                    
+                                    <td>{{ item.respuesta }}</td>
+                                    <td>{{ item.estado_actual }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="mt-4">
+                <h5 class="mb-2">📋 Historial PQRS</h5>
+                <p><em>Aún no hay respuesta.</em></p>
+            </div>
+            {% endif %}
+            
+            <a href="{{ url_for('pqrs.descargar_pdf_pqrs', id_pqrs=pqrs.id) }}" class="btn btn-warning">
+                📦 Descargar Comprobante PQRS
+            </a>
+
+
+        </div>
+    </div>
+
+    {% if pqrs.id_estado == 1 %}
+    <a href="{{ url_for('pqrs.editar_pqrs', pqrs_id=pqrs.id) }}" class="btn btn-sm btn-success">
+        Editar
+    </a>
+
+
+    <!-- Botón que abre el modal -->
+    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+        data-bs-target="#confirmModal{{ pqrs.id }}">
+        <i class="bi bi-trash"></i> Eliminar
+    </button>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="confirmModal{{ pqrs.id }}" tabindex="-1"
+        aria-labelledby="confirmModalLabel{{ pqrs.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmModalLabel{{ pqrs.id }}">Confirmar
+                        Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>¿Estás seguro de eliminar la pqrs?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="POST" action="{{ url_for('pqrs.eliminar_pqrs', id=pqrs.id) }}">
+                        <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <a href="{{ url_for('pqrs.listar') }}" class="btn btn-sm btn-success">Volver</a>
+</div>
+
+
+<script>
+  // Esperar a que la página cargue completamente
+  document.addEventListener("DOMContentLoaded", function () {
+    // Seleccionar todas las alertas
+    const alerts = document.querySelectorAll(".alert");
+
+    // Configurar el tiempo de desaparición (en milisegundos)
+    const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+    alerts.forEach(alert => {
+      // Configurar un temporizador para eliminar la alerta
+      setTimeout(() => {
+        alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+        setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+      }, tiempoDesaparicion);
+    });
+  });
+</script>
+{% endblock %}

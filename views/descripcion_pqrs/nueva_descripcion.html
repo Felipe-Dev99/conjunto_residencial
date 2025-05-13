@@ -1,0 +1,101 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-primary">Nueva Descripción de PQRS</h2>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" onsubmit="return validarFormulario()">
+            <div class="mb-3">
+                <label for="tipo" class="form-label fw-bold">Tipo</label>
+                <input type="text" id="tipo" name="tipo" class="form-control border-primary">
+                <div class="invalid-feedback">Por favor, ingresa un tipo.</div>
+            </div>
+            <div class="mb-3">
+                <label for="descripcion" class="form-label fw-bold">Descripción</label>
+                <textarea id="descripcion" name="descripcion" class="form-control border-primary"></textarea>
+                <div class="invalid-feedback">Por favor, ingresa una descripción.</div>
+            </div>
+            <div class="mb-3">
+                <label for="id_tipo" class="form-label fw-bold">Tipo de PQRS</label>
+                <select id="id_tipo" name="id_tipo" class="form-control border-primary">
+                    <option value="">Seleccione un tipo</option>
+                    {% for tipo in tipos_pqrs %}
+                    <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback">Por favor, selecciona un tipo de PQRS.</div>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-success w-50">Guardar</button>
+                <a href="{{ url_for('config.listar_descripciones') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function validarFormulario() {
+        let valido = true;
+        let campos = ["tipo", "descripcion", "id_tipo"];
+
+        campos.forEach(id => {
+            let campo = document.getElementById(id);
+            let error = campo.nextElementSibling;
+            
+            if (campo.value.trim() === "") {
+                campo.classList.add("is-invalid");
+                error.style.display = "block";
+                valido = false;
+            } else {
+                campo.classList.remove("is-invalid");
+                error.style.display = "none";
+            }
+        });
+        
+        if (!valido) {
+            setTimeout(() => {
+                campos.forEach(id => {
+                    let campo = document.getElementById(id);
+                    let error = campo.nextElementSibling;
+                    campo.classList.remove("is-invalid");
+                    error.style.display = "none";
+                });
+            }, 3000);
+        }
+        
+        return valido;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(function () {
+            let alerts = document.querySelectorAll(".alert");
+            alerts.forEach(alert => {
+                alert.classList.add("fade-out");
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 3000);
+    });
+</script>
+
+<style>
+    .fade-out {
+        opacity: 0;
+        transition: opacity 0.5s ease-out;
+    }
+    .invalid-feedback {
+        display: none;
+    }
+</style>
+{% endblock %}

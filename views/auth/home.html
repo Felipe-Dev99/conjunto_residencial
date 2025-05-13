@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<style>
+    /* Evita el desplazamiento horizontal en móviles */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Asegura que el contenido crezca y deje espacio para el footer */
+    .content-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    /* Sección principal */
+    .hero {
+        background: url("{{ url_for('static', filename='img/fondo_conjunto.jpeg') }}") no-repeat center center/cover;
+        min-height: 60vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        text-align: center;
+        padding: 20px;
+        width: 100%; /* Se asegura de que no se desborde */
+    }
+
+    /* Contenedor de texto */
+    .hero-content {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 20px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 600px;
+    }
+
+    /* Ajustes para pantallas pequeñas */
+    @media (max-width: 768px) {
+        .hero {
+            min-height: 50vh;
+            padding: 10px;
+        }
+
+        .hero-content {
+            padding: 15px;
+            width: 95%;
+        }
+
+        .hero-content h1 {
+            font-size: 5vw;
+        }
+
+        .hero-content p {
+            font-size: 4vw;
+        }
+    }
+</style>
+
+<!-- Contenedor principal -->
+<div class="content-wrapper">
+    <div class="hero">
+        <div class="hero-content">
+            <h1 class="fw-bold">Bienvenido al Conjunto Residencial El Dorado</h1>
+            <p class="lead">Administra fácilmente tus Reservas, PQRS y Pagos de Administración.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

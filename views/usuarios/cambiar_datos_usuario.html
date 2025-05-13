@@ -1,0 +1,148 @@
+{% if usuario.id_rol == 1%}
+{% extends "base_usuario.html" %}
+{% else %}
+{% extends "base_admin.html" %}
+{% endif %}
+{% block title %}Editar Datos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center">
+    <div class="card shadow-lg p-4" style="width: 400px;">
+        <h2 class="text-center text-primary mb-4">Editar Datos</h2>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form id="editUserForm" method="POST">
+            <div class="mb-3">
+                <label class="fw-bold" for="nombre">Nombre:</label>
+                <input type="text" name="nombre" id="nombre" class="form-control" value="{{ usuario.nombre }}" disabled>
+            </div>
+
+
+            <div class="mb-3">
+                <label class="fw-bold" for="nombre">Identificacion:</label>
+                <input type="text" name="identificacion" id="identificacion" class="form-control"
+                    value="{{ usuario.identificacion }}" disabled>
+            </div>
+            {% if usuario.id_rol == 1%}
+            <div class="mb-3">
+                <label class="fw-bold" for="nombre">Unidad Residencial:</label>
+                <input type="text" name="nombre" id="nombre" class="form-control"
+                    value="Torre: {{ usuario.casa.torre.nombre }} - Apartamento: {{ usuario.casa.apartamento.numero }}"
+                    disabled>
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="fw-bold" for="email">Email:</label>
+                <input type="email" name="email" id="email" class="form-control" value="{{ usuario.email }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold" for="contraseña">Nueva Contraseña (Opcional):</label>
+                <div class="input-group">
+                    <input type="password" name="contraseña" id="contraseña" class="form-control"
+                        placeholder="Dejar en blanco para no cambiar">
+                    <span class="input-group-text">
+                        <input type="checkbox" id="mostrarContraseña" onclick="togglePassword()"> 👁
+                    </span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold" for="telefono">Teléfono:</label>
+                <input type="text" name="telefono" id="telefono" class="form-control"
+                    value="{{ usuario.telefono or '' }}">
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </form>
+        {% if usuario.id_rol == 1%}
+        <a href="{{ url_for('main.home_usuario') }}" class="btn btn-secondary mt-3 w-100">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+        {% else %}
+        <a href="{{ url_for('main.home_admin') }}" class="btn btn-secondary mt-3 w-100">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+
+<script>
+    document.getElementById('editUserForm').addEventListener('submit', function (e) {
+        const nombre = document.getElementById('nombre').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const rol = document.getElementById('id_rol').value;
+        const casa = document.getElementById('id_casa').value;
+
+        if (!nombre || !email || !telefono || !rol || !casa) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Campos incompletos',
+                text: 'Debes completar todos los campos obligatorios.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: {
+                    popup: 'colored-toast'
+                }
+            });
+        }
+    });
+
+    function togglePassword() {
+        const contraseñaInput = document.getElementById("contraseña");
+        contraseñaInput.type = contraseñaInput.type === "password" ? "text" : "password";
+    }
+
+    // Esperar a que la página cargue completamente
+    document.addEventListener("DOMContentLoaded", function () {
+        // Seleccionar todas las alertas
+        const alerts = document.querySelectorAll(".alert");
+
+        // Configurar el tiempo de desaparición (en milisegundos)
+        const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+        alerts.forEach(alert => {
+            // Configurar un temporizador para eliminar la alerta
+            setTimeout(() => {
+                alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+                setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+            }, tiempoDesaparicion);
+        });
+    });
+
+</script>
+
+<style>
+    .swal2-popup.colored-toast {
+        background: #f8d7da !important;
+        color: #721c24 !important;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .navbar-text {
+        cursor: pointer;
+    }
+</style>
+{% endblock %}

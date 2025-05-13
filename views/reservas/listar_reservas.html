@@ -1,0 +1,197 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Administrar Reservas{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center mb-4 text-primary fw-bold">📅 Administración de Reservas</h2>
+
+        <form id="filterForm" class="mb-4">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">Usuario</label>
+                    <input type="text" id="filterUsuario" class="form-control" placeholder="Nombre">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Torre</label>
+                    <select id="filterTorre" class="form-select">
+                        <option value="">Todas</option>
+                        {% for torre in torres %}
+                            <option value="{{ torre.nombre }}">{{ torre.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+        
+                <div class="col-md-2">
+                    <label class="form-label">Apartamento</label>
+                    <select id="filterApartamento" class="form-select">
+                        <option value="">Todos</option>
+                        {% for apartamento in apartamentos %}
+                            <option value="{{ apartamento.numero }}">{{ apartamento.numero }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Desde</label>
+                    <input type="date" id="filterFechaInicio" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" id="filterFechaFin" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Hora</label>
+                    <select id="filterHora" class="form-select">
+                        <option value="">Todas</option>
+                        <option value="Diurno">Diurno</option>
+                        <option value="Nocturno">Nocturno</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Estado</label>
+                    <select id="filterEstado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Confirmada">Confirmada</option>
+                        <option value="Rechazada">Rechazada</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Espera de Aprobación">Espera de Aprobación</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="button" class="btn btn-primary" onclick="filtrarTabla()">Buscar</button>
+                    <button type="button" class="btn btn-secondary mt-2" onclick="limpiarFiltros()">Limpiar</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="reservasTable">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Item</th>
+                        <th>Radicado</th>
+                        <th>Usuario</th>
+                        <th>Unidad Residencial</th>
+                        <th>Fecha Agendamiento</th>
+                        <th>Hora</th>
+                        <th>Estado</th>
+                        <th>Ver Detalles</th>
+                    </tr>
+                </thead>
+                <tbody id="reservasTableBody">
+                    {% for reserva in reservas %}
+                    <tr class="text-center">
+                        <td>{{ loop.index }}</td>
+                        <td>{{ reserva.numero_radicado }}</td>
+                        <td>{{ reserva.usuario.nombre }}</td>
+                        <td>Torre: {{ reserva.usuario.casa.torre.nombre }} - Apart: {{ reserva.usuario.casa.apartamento.numero }}</td>
+                        <td>{{ reserva.fecha }}</td>
+                        <td>{{ reserva.horario }}</td>
+            
+                        <td>{{ reserva.estado.nombre }}</td>
+                        
+                        <td>
+                            <a href="{{ url_for('admin_reservas.detalle_reserva', id=reserva.id) }}" class="btn btn-info btn-sm">🔍 Ver Detalles</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <nav>
+            <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+    let itemsPorPagina = 5;
+    let tabla = document.querySelector("#reservasTableBody");
+    let filas = Array.from(tabla.getElementsByTagName("tr"));
+    let paginacion = document.querySelector("#pagination");
+
+    function mostrarPagina(pagina) {
+        let inicio = (pagina - 1) * itemsPorPagina;
+        let fin = inicio + itemsPorPagina;
+        filas.forEach((fila, index) => {
+            fila.style.display = (index >= inicio && index < fin) ? "" : "none";
+        });
+    }
+
+    function generarPaginacion() {
+        let totalPaginas = Math.ceil(filas.length / itemsPorPagina);
+        paginacion.innerHTML = "";
+        if (totalPaginas <= 1) return;
+        for (let i = 1; i <= totalPaginas; i++) {
+            let li = document.createElement("li");
+            li.className = "page-item";
+            let a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.innerText = i;
+            a.onclick = function () { mostrarPagina(i); return false; };
+            li.appendChild(a);
+            paginacion.appendChild(li);
+        }
+    }
+
+    function filtrarTabla() {
+    let usuario = document.querySelector("#filterUsuario").value.toLowerCase();
+    let torre = document.querySelector("#filterTorre").value.toLowerCase();
+    let apartamento = document.querySelector("#filterApartamento").value.toLowerCase();
+    let fechaInicio = document.querySelector("#filterFechaInicio").value;
+    let fechaFin = document.querySelector("#filterFechaFin").value;
+    let hora = document.querySelector("#filterHora").value;
+    let estado = document.querySelector("#filterEstado").value;
+
+    filas = Array.from(tabla.getElementsByTagName("tr"));
+
+    filas.forEach(fila => {
+        let cols = fila.getElementsByTagName("td");
+
+        let colUsuario = cols[2].innerText.toLowerCase();
+        let colUnidad = cols[3].innerText.toLowerCase();  // Ej: "Torre: A - Apart: 101"
+        let colFecha = cols[4].innerText;
+        let colHora = cols[5].innerText;
+        let colEstado = cols[6].innerText;
+
+        let match = true;
+
+        if (usuario && !colUsuario.includes(usuario)) match = false;
+        if (torre && !colUnidad.includes("torre: " + torre)) match = false;
+        if (apartamento && !colUnidad.includes("apart: " + apartamento)) match = false;
+        if (fechaInicio && fechaFin) match = match && (colFecha >= fechaInicio && colFecha <= fechaFin);
+        else if (fechaInicio) match = match && (colFecha >= fechaInicio);
+        else if (fechaFin) match = match && (colFecha <= fechaFin);
+        if (hora && colHora !== hora) match = false;
+        if (estado && colEstado !== estado) match = false;
+
+        fila.style.display = match ? "" : "none";
+    });
+
+    filas = filas.filter(fila => fila.style.display !== "none");
+    generarPaginacion();
+    mostrarPagina(1);
+}
+
+
+    function limpiarFiltros() {
+        document.querySelector("#filterForm").reset();
+        filas.forEach(fila => fila.style.display = "");
+        filas = Array.from(tabla.getElementsByTagName("tr"));
+        generarPaginacion();
+        mostrarPagina(1);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        generarPaginacion();
+        mostrarPagina(1);
+    });
+</script>
+
+{% endblock %}

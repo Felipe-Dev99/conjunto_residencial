@@ -1,0 +1,15 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Apartamento</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="numero" class="form-label">Número del Apartamento</label>
+            <input type="text" id="numero" name="numero" class="form-control" value="{{ apartamento.numero }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="{{ url_for('config.listar_apartamentos') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

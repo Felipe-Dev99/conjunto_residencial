@@ -1,0 +1,68 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Espacios para Reservar</h2>
+    <a href="{{ url_for('config.crear_espacio') }}" class="btn btn-primary mb-3">Agregar Espacio</a>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for espacio in espacios %}
+            <tr>
+                <td>{{ espacio.id }}</td>
+                <td>{{ espacio.nombre }}</td>
+                <td>
+                    <a href="{{ url_for('config.editar_espacio', id=espacio.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-id="{{ espacio.id }}">Eliminar</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Seguro que deseas eliminar este espacio?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Volver -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('config.configuracion') }}" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var confirmDeleteModal = document.getElementById("confirmDeleteModal");
+        confirmDeleteModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+            var espacioId = button.getAttribute("data-id");
+            var form = document.getElementById("deleteForm");
+            form.action = "{{ url_for('config.eliminar_espacio', id=0) }}".replace('0', espacioId);
+        });
+    });
+</script>
+{% endblock %}

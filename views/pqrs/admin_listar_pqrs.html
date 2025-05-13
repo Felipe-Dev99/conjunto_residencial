@@ -1,0 +1,202 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Administrar Pqrs{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center mb-4 text-primary fw-bold">📩 PQRS Registradas</h2>
+
+        <!-- Formulario de búsqueda -->
+        <form id="filterForm" class="mb-4">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <label class="form-label">Número Radicacion</label>
+                    <input type="text" id="filterNumero" class="form-control" placeholder="Número Radicado">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Desde</label>
+                    <input type="date" id="filterFechaInicio" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" id="filterFechaFin" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Tipo Radicacion</label>
+                    <select id="filterTipo" class="form-control">
+                        <option value="">Todos los tipos</option>
+                        <option value="Petición">Petición</option>
+                        <option value="Queja">Queja</option>
+                        <option value="Reclamo">Reclamo</option>
+                        <option value="Sugerencia">Sugerencia</option>
+                        <option value="Felicitación">Felicitaciones</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Estado</label>
+                    <select id="filterEstado" class="form-control">
+                        <option value="">Todos los estados</option>
+                        <option value="Registrada">Registrada</option>
+                        <option value="En Proceso">En Proceso</option>
+                        <option value="Finalizada">Finalizada</option>
+                        <option value="Vencida">Vencidas</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="button" class="btn btn-primary" onclick="filtrarTabla()">Buscar</button>
+                    <button type="button" class="btn btn-secondary mt-2" onclick="limpiarFiltros()">Limpiar</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Tabla responsive -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered table-hover">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Item</th>
+                        <th>Número Radicado</th>
+                        <th>Fecha Radicacion</th>
+                        <th>Tipo PQRS</th>
+                        <th>Fecha Maxima Contestacion</th>
+                        <th>Estado</th>
+                        <th>Ver Solicitud</th>
+                    </tr>
+                </thead>
+                <tbody id="pqrsTableBody">
+                    {% for pqrs in pqrs_list %}
+                    <tr class="text-center">
+                        <td>{{ (pqrs_paginados.page - 1) * pqrs_paginados.per_page + loop.index }}</td>
+                        <td>{{ pqrs.numero_radicado }}</td>
+                        <td>{{ pqrs.fecha_creacion.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ pqrs.tipo_p.nombre }}</td>
+                        <td>{{ pqrs.fecha_max }}</td>
+                        <td>{{ pqrs.estado.nombre }}</td>
+                        <td>
+                            {% if pqrs.estado.id != 3 %}
+                            <a href="{{ url_for('admin_pqrs.responder_pqrs', id=pqrs.id) }}"
+                                class="btn btn-sm btn-success">Ver</a>
+                            {% else %}
+                            Peticion Finalizada
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if pqrs_paginados.has_prev %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="{{ url_for('admin_pqrs.listar', page=pqrs_paginados.prev_num) }}">Anterior</a>
+                </li>
+                {% endif %}
+
+                {% for page_num in pqrs_paginados.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2)
+                %}
+                <li class="page-item {% if page_num == pqrs_paginados.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin_pqrs.listar', page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if pqrs_paginados.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="{{ url_for('admin_pqrs.listar', page=pqrs_paginados.next_num) }}">Siguiente</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+    let itemsPorPagina = 5;
+    let tabla = document.querySelector("#pqrsTableBody");
+    let filas = Array.from(tabla.getElementsByTagName("tr"));
+    let paginacion = document.querySelector("#pagination");
+
+    function mostrarPagina(pagina, filasVisibles) {
+        let inicio = (pagina - 1) * itemsPorPagina;
+        let fin = inicio + itemsPorPagina;
+
+        filas.forEach(fila => (fila.style.display = "none")); // Ocultar todas las filas
+        filasVisibles.slice(inicio, fin).forEach(fila => (fila.style.display = "")); // Mostrar solo las filas visibles
+    }
+
+    function generarPaginacion(filasVisibles) {
+        let totalPaginas = Math.ceil(filasVisibles.length / itemsPorPagina);
+        paginacion.innerHTML = "";
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            let li = document.createElement("li");
+            li.className = "page-item";
+            let a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.innerText = i;
+            a.onclick = function () {
+                mostrarPagina(i, filasVisibles); // Mostrar la página seleccionada
+                return false;
+            };
+            li.appendChild(a);
+            paginacion.appendChild(li);
+        }
+
+        // Resaltar la primera página como activa
+        if (paginacion.firstChild) {
+            paginacion.firstChild.classList.add("active");
+        }
+    }
+
+    function removeAccents(str) {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function filtrarTabla() {
+        let numero = document.querySelector("#filterNumero").value.toLowerCase();
+        let fechaInicio = document.querySelector("#filterFechaInicio").value;
+        let fechaFin = document.querySelector("#filterFechaFin").value;
+        let tipo = document.querySelector("#filterTipo").value;
+        let estado = document.querySelector("#filterEstado").value;
+
+        filas.forEach(fila => {
+            let cols = fila.getElementsByTagName("td");
+            let match = true;
+
+            if (numero && !cols[1].innerText.toLowerCase().includes(numero)) match = false;
+            if (fechaInicio && cols[2].innerText < fechaInicio) match = false;
+            if (fechaFin && cols[2].innerText > fechaFin) match = false;
+            if (tipo && removeAccents(cols[3].innerText) !== removeAccents(tipo)) match = false;
+            if (estado && removeAccents(cols[5].innerText) !== removeAccents(estado)) match = false;
+
+            fila.style.display = match ? "" : "none";
+        });
+
+        let filasVisibles = filas.filter(fila => fila.style.display !== "none");
+        generarPaginacion(filasVisibles); // Actualizar la paginación con las filas visibles
+        mostrarPagina(1, filasVisibles); // Mostrar la primera página de las filas visibles
+    }
+
+    function limpiarFiltros() {
+        document.querySelector("#filterForm").reset();
+        filas.forEach(fila => (fila.style.display = ""));
+        let filasVisibles = filas.filter(fila => fila.style.display !== "none");
+        generarPaginacion(filasVisibles);
+        mostrarPagina(1, filasVisibles);
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+        let filasVisibles = filas.filter(fila => fila.style.display !== "none");
+        generarPaginacion(filasVisibles);
+        mostrarPagina(1, filasVisibles);
+    });
+
+</script>
+
+{% endblock %}

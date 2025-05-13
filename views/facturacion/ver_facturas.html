@@ -1,0 +1,53 @@
+{% extends "base_usuario.html" %}
+
+{% block title %}Pagos de Administración{% endblock %}
+
+{% block content %}
+<style>
+    .facturas-container {
+        max-width: 800px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="facturas-container mt-4">
+    <h2 class="text-center text-primary fw-bold">📜 Pagos de Administración</h2>
+    <p class="text-center text-muted">Consulta y paga tus recibos pendientes.</p>
+
+    {% if factura %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Factura del mes {{ factura.fecha_emision.strftime('%B %Y') }}</h5>
+                <p><strong>Fecha de emisión:</strong> {{ factura.fecha_emision.strftime('%d-%m-%Y') }}</p>
+                <p><strong>Fecha máxima de pago:</strong> {{ fecha_max_pago.strftime('%d-%m-%Y') }}</p>
+                <p><strong>Valor a pagar:</strong> ${{ factura.valor }}</p>
+                <p><strong>Estado:</strong> <span class="badge bg-warning">{{ factura.estado }}</span></p>
+
+                <!-- Si ya hay un comprobante, mostrarlo -->
+                {% if factura.comprobante_pago %}
+                    <p><strong>Comprobante subido:</strong> 
+                        <a href="{{ url_for('static', filename='facturacion/usuario_' + current_user.id|string + '/' + factura.comprobante_pago) }}" target="_blank">
+                            {{ factura.comprobante_pago }}
+                        </a>
+                    </p>
+                {% else %}
+                    <!-- Formulario para subir comprobante -->
+                    <form action="{{ url_for('facturacion.subir_comprobante', factura_id=factura.id) }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="comprobante" class="form-label">Subir comprobante de pago:</label>
+                            <input type="file" class="form-control" name="comprobante" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Subir Comprobante</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p>No hay recibos disponible para este mes.</p>
+    {% endif %}
+</div>
+{% endblock %}

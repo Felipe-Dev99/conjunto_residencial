@@ -1,0 +1,165 @@
+{% extends 'base_usuario.html' %}
+
+{% block title %}Editar Agenda{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center mb-4">Editar Reserva del Salón Comunal</h2>
+
+        <form method="POST" id="formReserva" action="{{ url_for('reserva.editar_reserva', id=agenda.id) }}"
+            enctype="multipart/form-data">
+
+            <!-- Selector de Tipo de PQRS -->
+            <div class="mb-3">
+                <label for="id_tipo" class="form-label">Selecciona El Espacio</label>
+                <select class="form-select" id="id_espacio" name="id_espacio">
+                    <option value="">Seleccione un espacio</option>
+                    {% for espacio in espacios %}
+                    <option value="{{ espacio.id }}" {% if agenda.id_espacio_reserva==espacio.id %}selected{% endif %}>{{ espacio.nombre }} - {{ espacio.descripcion }} </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+            <div class="mb-3">
+                <label for="fecha" class="form-label fw-bold">Fecha de Reserva:</label>
+                <input type="date" id="fecha" name="fecha" class="form-control" value="{{ agenda.fecha }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="horario" class="form-label fw-bold">Horario:</label>
+                <select id="horario" name="horario" class="form-select" required>
+                    <option value="Diurno" {% if agenda.horario=='Diurno' %}selected{% endif %}>🌞 Diurno (8 AM - 3 PM)
+                    </option>
+                    <option value="Noche" {% if agenda.horario=='Noche' %}selected{% endif %}>🌙 Noche (3 PM - 8 PM)
+                    </option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="descripcion" class="form-label fw-bold">Descripción:</label>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="3" maxlength="300"
+                    required>{{ agenda.descripcion }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="estado" class="form-label fw-bold">Estado:</label>
+                <input type="text" class="form-control" value="{{ agenda.estado.nombre }}" disabled>
+            </div>
+
+            {% if agenda.estado == 'Pendiente' %}
+            <div class="mb-3">
+                <label for="comprobante_pago" class="form-label fw-bold">Subir Comprobante de Pago:</label>
+                <input type="file" id="comprobante_pago" name="comprobante_pago" class="form-control">
+            </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between mt-4">
+                <button type="submit" class="btn btn-primary w-50 me-2">Actualizar Reserva</button>
+                <button type="submit" class="btn btn-secondary w-50 me-2">Volver</button>
+                <a href="{{ url_for('reserva.eliminar_agenda', id=agenda.id) }}" class="btn btn-danger w-50"
+                    onclick="return confirm('¿Estás seguro de eliminar esta reserva?');">Eliminar</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Validación de campos vacíos al enviar el formulario
+    document.getElementById('formReserva').addEventListener('submit', function (event) {
+        const fecha = document.getElementById('fecha').value;
+        const horario = document.getElementById('horario').value;
+        const descripcion = document.getElementById('descripcion').value.trim();
+
+        if (fecha === '' || horario === '' || descripcion === '') {
+            event.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Campos vacíos',
+                text: 'Por favor, complete todos los campos antes de continuar.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: {
+                    popup: 'colored-toast'
+                }
+            });
+        }
+    });
+
+    // Modal de eliminación con cabecera completamente roja
+    document.getElementById('btnEliminar').addEventListener('click', function (e) {
+        e.preventDefault();
+        Swal.fire({
+            html: `
+                <div class="modal-header bg-danger text-white w-100 m-0">
+                    <h5 class="modal-title w-100 text-center">Confirmar Eliminación</h5>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <p>¿Estás seguro de eliminar la reserva del <strong>{{ agenda.fecha }}</strong> en horario <strong>{{ agenda.horario }}</strong>?</p>
+                </div>
+            `,
+            showCancelButton: true,
+            showConfirmButton: true,
+            confirmButtonText: '<i class="bi bi-trash"></i> Sí, Eliminar',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                popup: 'swal2-bootstrap-modal p-0 rounded-4',
+                actions: 'd-flex justify-content-center gap-2 pb-4',
+                confirmButton: 'btn btn-danger',
+                cancelButton: 'btn btn-secondary'
+            },
+            buttonsStyling: false,
+            showCloseButton: true,
+            focusConfirm: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ url_for('reserva.eliminar_agenda', id=agenda.id) }}";
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    });
+</script>
+
+<style>
+    .swal2-popup.colored-toast {
+        background: #f8d7da !important;
+        color: #721c24 !important;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .swal2-popup.swal2-bootstrap-modal {
+        width: 500px !important;
+        padding: 0 !important;
+        /* Eliminar padding interno del modal */
+        overflow: hidden;
+        border-radius: .75rem !important;
+    }
+
+    .swal2-bootstrap-modal .modal-header {
+        width: 100%;
+        margin: 0;
+        padding: 1.25rem;
+        background-color: #dc3545;
+        /* Rojo Bootstrap */
+        color: white;
+        border-bottom: none;
+        border-radius: .75rem .75rem 0 0;
+    }
+
+    .swal2-bootstrap-modal .modal-body {
+        padding: 1.25rem 1.5rem;
+    }
+</style>
+{% endblock %}

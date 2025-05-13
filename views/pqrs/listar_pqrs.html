@@ -1,0 +1,140 @@
+{% extends "base_usuario.html" %}
+
+{% block title %}Mis Pqrs{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center mb-4 text-primary fw-bold">📩 Mis PQRS</h2>
+
+        <!-- Mensajes de alerta -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Botón de agendar -->
+        <div class="d-flex justify-content-end mb-3">
+            <a href="{{ url_for('pqrs.crear_pqrs') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-calendar-plus"></i> Radicar PQRS
+            </a>
+        </div>
+
+        <!-- Tabla responsive -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Item</th>
+                        <th>Número Radicado</th>
+                        <th>Fecha Radicacion</th>
+                        <th>Tipo PQRS</th>
+                        <th>Estado</th>
+                        <th>Respuesta</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pqrs in pqrs_list %}
+                    <tr class="text-center">
+                        <td>{{ loop.index + (pqrs_list.page - 1) * pqrs_list.per_page }}</td>
+                        <td><strong>{{ pqrs.numero_radicado }}</strong></td>
+                        <td>{{ pqrs.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ pqrs.tipo_p.nombre }}</td>
+
+                        <td><strong>{{ pqrs.estado.nombre }}</strong></td>
+
+
+                        <td>
+                            {% if pqrs.respuesta %}
+                            {{ pqrs.respuesta }}
+                            {% else %}
+                            Sin respuesta
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('pqrs.ver_pqrs', id=pqrs.id) }}" class="btn btn-sm btn-success">
+                                Ver
+                            </a>
+
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Controles de paginación -->
+        <nav aria-label="Paginación">
+            <ul class="pagination justify-content-center">
+                {% if pqrs_list.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('pqrs.listar', page=pqrs_list.prev_num) }}">Anterior</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Anterior</span>
+                </li>
+                {% endif %}
+
+                {% for page_num in pqrs_list.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                {% if page_num == pqrs_list.page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('pqrs.listar', page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if pqrs_list.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('pqrs.listar', page=pqrs_list.next_num) }}">Siguiente</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Siguiente</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+<!-- Asegúrate que Bootstrap JS esté cargado -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Esperar a que la página cargue completamente
+    document.addEventListener("DOMContentLoaded", function () {
+        // Seleccionar todas las alertas
+        const alerts = document.querySelectorAll(".alert");
+
+        // Configurar el tiempo de desaparición (en milisegundos)
+        const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+        alerts.forEach(alert => {
+            // Configurar un temporizador para eliminar la alerta
+            setTimeout(() => {
+                alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+                setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+            }, tiempoDesaparicion);
+        });
+    });
+</script>
+{% endblock %}

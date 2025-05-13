@@ -1,0 +1,113 @@
+{% extends "base_admin.html" %}
+{% block title %}Editar Usuario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh; overflow-y: auto;">
+    <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px; max-height: 95vh; overflow-y: auto;">
+        <h2 class="text-center text-primary mb-4">Editar Usuario</h2>
+
+        <form id="editUserForm" method="POST">
+            <div class="mb-3">
+                <label class="fw-bold" for="nombre">Nombres y Apellidos:</label>
+                <input type="text" name="nombre" id="nombre" class="form-control" value="{{ usuario.nombre }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold" for="nombre">Identificacion:</label>
+                <input type="text" name="identificacion" id="identificacion" class="form-control" value="{{ usuario.identificacion }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold" for="email">Email:</label>
+                <input type="email" name="email" id="email" class="form-control" value="{{ usuario.email }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold" for="contraseña">Nueva Contraseña (Opcional):</label>
+                <input type="password" name="contraseña" id="contraseña" class="form-control"
+                    placeholder="Dejar en blanco para no cambiar">
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold" for="telefono">Teléfono:</label>
+                <input type="text" name="telefono" id="telefono" class="form-control"
+                    value="{{ usuario.telefono or '' }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold" for="id_rol">Rol:</label>
+                <select name="id_rol" id="id_rol" class="form-select">
+                    {% for rol in roles %}
+                    <option value="{{ rol.id }}" {% if usuario.id_rol==rol.id %}selected{% endif %}>{{ rol.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold" for="id_torre">Selecciona una Torre:</label>
+                <select name="id_torre" id="id_torre" class="form-select" required>
+                    {% for torre in torres %}
+                    <option value="{{ torre.id }}"  {% if usuario.casa.id_torre == torre.id %}selected{% endif %}>{{ torre.nombre }}</option>
+                    {% endfor %}
+                </select>
+
+                <label class="fw-bold" for="id_apartamento">Selecciona un Apartamento:</label>
+                <select name="id_apartamento" id="id_apartamento" class="form-select" required>
+                    {% for apartamento in apartamentos %}
+                    <option value="{{ apartamento.id }}" {% if usuario.casa.id_apartamento == apartamento.id %}selected{% endif %}>{{ apartamento.numero }}</option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </form>
+
+        <a href="{{ url_for('usuarios.listar_usuarios') }}" class="btn btn-secondary mt-3 w-100">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+
+<script>
+    document.getElementById('editUserForm').addEventListener('submit', function (e) {
+        const nombre = document.getElementById('nombre').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const rol = document.getElementById('id_rol').value;
+        const casa = document.getElementById('id_casa').value;
+
+        if (!nombre || !email || !telefono || !rol || !casa) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Campos incompletos',
+                text: 'Debes completar todos los campos obligatorios.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: {
+                    popup: 'colored-toast'
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    .swal2-popup.colored-toast {
+        background: #f8d7da !important;
+        color: #721c24 !important;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %}

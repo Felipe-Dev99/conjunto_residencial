@@ -1,0 +1,15 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Torre</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Numero de la Torre</label>
+            <input type="text" id="nombre" name="nombre" class="form-control" value="{{ torre.nombre }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="{{ url_for('config.nueva_torre') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar unidad residencial</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="torre" class="form-label">Torre</label>
+            <input type="text" id="torre" name="torre" class="form-control" value="{{ casa.torre.nombre }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="apartamento" class="form-label">Apartamento</label>
+            <input type="text" id="apartamento" name="apartamento" class="form-control" value="{{ casa.apartamento.numero }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Actualizar</button>
+        <a href="{{ url_for('config.listar_casas') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

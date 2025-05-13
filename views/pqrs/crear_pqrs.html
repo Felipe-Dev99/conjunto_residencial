@@ -1,0 +1,339 @@
+{% extends "base_usuario.html" %} {% block title %}Gestión de PQRS{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <!-- Aquí cambiamos solo el título -->
+        <h2 class="text-center mb-4 text-primary fw-bold">📝 Gestión de PQRS</h2>
+
+                <!-- Mensajes de alerta -->
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+        <form id="pqrsForm" action="{{ url_for('pqrs.crear_pqrs') }}" method="POST" enctype="multipart/form-data">
+
+
+            <!-- Selector de Tipo de PQRS -->
+            <div class="mb-3">
+                <label for="id_tipo" class="form-label">Tipo de PQRS</label>
+                <select class="form-select" id="id_tipo" name="id_tipo">
+                    <option value="">Seleccione un tipo</option>
+                    {% for tipo in tipos_pqrs %}
+                    <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Selector de Descripción (Se llena dinámicamente según el Tipo seleccionado) -->
+            <div class="mb-3">
+                <label for="id_descripcion" class="form-label">Descripción</label>
+                <select name="id_descripcion" id="id_descripcion" class="form-control">
+                    <option value="">Seleccione una descripción</option>
+                    {% for descripcion in descripciones_pqrs %}
+                    <option value="{{ descripcion.id }}">{{ descripcion.tipo}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="descripcion_texto">Detalles de la descripción:</label>
+                <textarea id="descripcion_texto" name="descripcion_texto" class="form-control" rows="4" disabled
+                    readonly></textarea>
+            </div>
+
+            <!-- Observación Adicional -->
+            <div class="mb-3">
+                <label for="observacion" class="form-label">Observación Adicional</label>
+                <textarea name="observacion" id="observacion" class="form-control" rows="3"></textarea>
+            </div>
+
+            <!-- Adjuntar soportes con diseño atractivo -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Adjuntar soporte (opcional):</label>
+                <div class="input-group">
+                    <input type="file" id="archivoInput" name="archivos[]" class="form-control form-control-sm" accept=".pdf,.jpg,.png,.jpeg" multiple>
+                    <button type="button" class="btn btn-primary btn-sm" id="agregarArchivoBtn">
+                        <i class="fas fa-plus"></i> Agregar archivo
+                    </button>
+                </div>
+                <small class="text-muted mt-1 d-block">
+                    Máximo 1 archivo. El archivo debe ser PDF o imagen (.pdf,.jpg,.png,.jpeg) y no superar los 2 MB.
+                </small>
+                <ul id="listaArchivos" class="list-group mt-2"></ul>
+            </div>
+            
+
+
+            
+
+            <!-- Checkbox de términos y condiciones -->
+            <div class="form-check mt-3 d-flex align-items-center">
+                <input type="checkbox" id="aceptar_terminos" class="form-check-input me-2" />
+                <label for="aceptar_terminos" class="form-check-label">
+                    Acepto los
+                    {% if datos.terminos_pdf %}
+                    <a href="{{ url_for('static', filename='configuracion/terminos_condiciones.pdf') }}" target="_blank">
+                        términos y condiciones
+                    </a>
+                    {% else %}
+                    <a href="#">
+                        términos y condiciones
+                    </a>
+                    {% endif %}
+                    y la
+                    {% if datos.politicas_pdf %}
+                    <a href="{{ url_for('static', filename='configuracion/politicas_privacidad.pdf') }}" target="_blank">
+                        política de privacidad
+                    </a>
+                    {% else %}
+                    <a href="#">
+                        política de privacidad
+                    </a>
+                    {% endif %}
+                </label>
+            </div>
+
+            <div class="text-center mt-4 d-flex justify-content-center gap-3">
+                <button type="submit" class="btn btn-primary px-4" id="btnEnviar" disabled>
+                    Enviar
+                </button>
+
+                {% if session.get('role') == 'Administrador' %}
+                <a href="{{ url_for('main.home_admin') }}" class="btn btn-secondary px-4">Cancelar</a>
+                {% elif session.get('role') == 'Residente' %}
+                <a href="{{ url_for('pqrs.listar') }}" class="btn btn-secondary px-4">Cancelar</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Diseño personalizado para el input de archivos */
+    .custom-file-upload {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        text-align: center;
+        color: #007bff;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .custom-file-upload:hover {
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+
+    .custom-file-upload i {
+        font-size: 24px;
+        margin-right: 10px;
+    }
+
+    /* Ajuste del checkbox */
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+    }
+
+    .swal2-popup.colored-toast {
+        background: #f8d7da !important;
+        color: #721c24 !important;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+</style>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.getElementById("id_tipo").addEventListener("change", function () {
+        let tipo_id = this.value;
+
+        fetch("/pqrs/obtener_descripciones/" + tipo_id)
+            .then(response => response.json())
+            .then(data => {
+                let descripcionSelect = document.getElementById("id_descripcion");
+                let descripcionTexto = document.getElementById("descripcion_texto");
+
+                descripcionSelect.innerHTML = '<option value="">Seleccione una descripción</option>';
+                descripcionTexto.value = "";
+
+                data.forEach(function (descripcion) {
+                    let option = document.createElement("option");
+                    option.value = descripcion.id;
+                    option.textContent = descripcion.tipo;
+                    option.dataset.descripcion = descripcion.descripcion;
+                    descripcionSelect.appendChild(option);
+                });
+            });
+    });
+
+    // Evento para mostrar la descripción seleccionada en el cuadro de texto
+    document.getElementById("id_descripcion").addEventListener("change", function () {
+        let descripcionTexto = document.getElementById("descripcion_texto");
+        let selectedOption = this.options[this.selectedIndex];
+
+        if (selectedOption.value) {
+            descripcionTexto.value = selectedOption.dataset.descripcion;
+        } else {
+            descripcionTexto.value = "";
+        }
+    });
+
+    document
+        .getElementById("aceptar_terminos")
+        .addEventListener("change", function () {
+            document.getElementById("btnEnviar").disabled = !this.checked;
+        });
+
+    document.getElementById("pqrsForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const tipo = document.getElementById("tipo").value;
+        const descripcion = document.getElementById("descripcion").value.trim();
+        const terminos = document.getElementById("aceptar_terminos").checked;
+
+        if (tipo === "" || descripcion === "" || !terminos) {
+            Swal.fire({
+                icon: "error",
+                title: "Campos incompletos",
+                text: "Debes completar todos los campos y aceptar los términos.",
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: {
+                    popup: "colored-toast",
+                },
+            });
+        } else {
+            this.submit();
+        }
+    });
+
+    const archivoInput = document.getElementById('archivoInput');
+    const agregarBtn = document.getElementById('agregarArchivoBtn');
+    const listaArchivos = document.getElementById('listaArchivos');
+    const form = document.querySelector('form');
+
+    const MAX_ARCHIVOS = 1;
+    const MAX_SIZE_MB = 2;
+    const EXTENSIONES_VALIDAS = ['pdf', 'jpg', 'jpeg', 'png'];
+
+    let archivosSeleccionados = [];
+
+    // Agregar archivo
+    agregarBtn.addEventListener('click', () => {
+        const archivo = archivoInput.files[0];
+        if (!archivo) return;
+
+        // Validar número de archivos
+        if (archivosSeleccionados.length >= MAX_ARCHIVOS) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Límite alcanzado',
+                text: `Solo puedes adjuntar hasta ${MAX_ARCHIVOS} archivos.`,
+            });
+            return;
+        }
+
+        // Validar extensión
+        const extension = archivo.name.split('.').pop().toLowerCase();
+        if (!EXTENSIONES_VALIDAS.includes(extension)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Tipo de archivo no permitido',
+                text: 'Solo se permiten archivos PDF, JPG, PNG o JPEG.',
+            });
+            return;
+        }
+
+        // Validar tamaño
+        const sizeMB = archivo.size / (1024 * 1024);
+        if (sizeMB > MAX_SIZE_MB) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Archivo demasiado grande',
+                text: `El archivo supera los ${MAX_SIZE_MB} MB permitidos.`,
+            });
+            return;
+        }
+
+        // Agregar a la lista
+        archivosSeleccionados.push(archivo);
+        archivoInput.value = '';
+        renderListaArchivos();
+    });
+
+    // Renderiza la lista de archivos
+    function renderListaArchivos() {
+        listaArchivos.innerHTML = '';
+        archivosSeleccionados.forEach((archivo, index) => {
+            const item = document.createElement('li');
+            item.className = 'list-group-item d-flex justify-content-between align-items-center';
+            item.innerHTML = `
+                <span>${archivo.name} (${(archivo.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                <button class="btn btn-danger btn-sm">Eliminar</button>
+            `;
+
+            item.querySelector('button').addEventListener('click', () => {
+                archivosSeleccionados.splice(index, 1);
+                renderListaArchivos();
+            });
+
+            listaArchivos.appendChild(item);
+        });
+    }
+
+    // Validar antes de enviar
+    form.addEventListener('submit', function (e) {
+        e.preventDefault(); // Prevenir envío por defecto
+
+        if (archivosSeleccionados.length > MAX_ARCHIVOS) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Demasiados archivos',
+                text: `Solo puedes adjuntar hasta ${MAX_ARCHIVOS} archivos.`,
+            });
+            return;
+        }
+
+        const formData = new FormData(form);
+        archivosSeleccionados.forEach((archivo) => {
+            formData.append('archivos[]', archivo);
+        });
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.text();
+            }
+        })
+        .then(html => {
+            if (html) {
+                document.open();
+                document.write(html);
+                document.close();
+            }
+        });
+    });
+
+
+</script>
+
+{% endblock %}

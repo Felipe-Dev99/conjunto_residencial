@@ -1,0 +1,166 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<h2>Registro de Actividad - {{ usuario.nombre }}</h2>
+
+<a href="{{ url_for('log.listar_usuarios_logs') }}" class="btn btn-secondary mb-3">Volver</a>
+
+<!-- Formulario de Filtros -->
+<form method="GET" action="{{ url_for('log.ver_logs_usuario', id_usuario=usuario.id) }}" class="mb-4">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label for="tipo" class="form-label">Tipo</label>
+            <select class="form-select" id="tipo" name="tipo">
+                <option value="">Todos</option>
+                {% for tipo in tipos_logs %}
+                <option value="{{ tipo }}" {% if filtros.tipo==tipo %}selected{% endif %}>
+                    {{ tipo }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio"
+                value="{{ filtros.fecha_inicio }}" required>
+        </div>
+
+        <div class="col-md-3">
+            <label for="fecha_fin" class="form-label">Fecha Fin</label>
+            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ filtros.fecha_fin }}" required>
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+            <a href="{{ url_for('log.ver_logs_usuario', id_usuario=usuario.id) }}"
+                class="btn btn-outline-secondary me-2">
+                Limpiar
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item"
+                            href="{{ url_for('log.descargar_logs_usuario', id_usuario=usuario.id, tipo=filtros.tipo, fecha_inicio=filtros.fecha_inicio, fecha_fin=filtros.fecha_fin, formato='pdf') }}">
+                            PDF
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item"
+                            href="{{ url_for('log.descargar_logs_usuario', id_usuario=usuario.id, tipo=filtros.tipo, fecha_inicio=filtros.fecha_inicio, fecha_fin=filtros.fecha_fin, formato='excel') }}">
+                            Excel
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Tabla de Logs -->
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Acción</th>
+                <th>Fecha</th>
+                <th>IP</th>
+            </tr>
+        </thead>
+        <tbody id="logsTableBody">
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.tipo }}</td>
+                <td>{{ log.accion }}</td>
+                <td>{{ log.fecha.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ log.ip }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron registros</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+<nav aria-label="Paginación">
+    <ul class="pagination justify-content-center mt-3" id="pagination"></ul>
+</nav>
+
+<script>
+    let itemsPorPagina = 100;
+    let tabla = document.querySelector("#logsTableBody");
+    let filas = Array.from(tabla.getElementsByTagName("tr")).filter(f => !f.querySelector("td[colspan]"));
+    let paginacion = document.querySelector("#pagination");
+
+    function mostrarPagina(pagina) {
+        let inicio = (pagina - 1) * itemsPorPagina;
+        let fin = inicio + itemsPorPagina;
+        filas.forEach((fila, index) => {
+            fila.style.display = (index >= inicio && index < fin) ? "" : "none";
+        });
+    }
+
+    function generarPaginacion() {
+        let totalPaginas = Math.ceil(filas.length / itemsPorPagina);
+        paginacion.innerHTML = "";
+        if (totalPaginas <= 1) return;
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            let li = document.createElement("li");
+            li.className = "page-item";
+            let a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.innerText = i;
+            a.onclick = function () {
+                mostrarPagina(i);
+                document.querySelectorAll("#pagination .page-item").forEach(item => item.classList.remove("active"));
+                li.classList.add("active");
+                return false;
+            };
+            li.appendChild(a);
+            paginacion.appendChild(li);
+        }
+
+        if (paginacion.firstChild) {
+            paginacion.firstChild.classList.add("active");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        generarPaginacion();
+        mostrarPagina(1);
+    });
+</script>
+
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        margin-bottom: 1rem;
+        color: #212529;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .table-dark {
+        color: #fff;
+        background-color: #343a40;
+    }
+</style>
+{% endblock %}

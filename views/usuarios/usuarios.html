@@ -1,0 +1,315 @@
+{% extends "base_admin.html" %}
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow-lg p-4">
+    <h2 class="text-center mb-4 text-primary fw-bold">👥 Gestión de Usuarios</h2>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="d-flex justify-content-end mb-3">
+      <a href="{{ url_for('main.register') }}" class="btn btn-success">
+        <i class="fas fa-user-plus"></i> Crear Usuario
+      </a>
+      <button class="btn btn-outline-primary" onclick="exportarExcel()">
+        <i class="fas fa-file-excel"></i> Exportar a Excel
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <form id="filtroUsuarios" class="mb-4">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <label for="filtroNombre" class="form-label">Nombre</label>
+          <input type="text" id="filtroNombre" class="form-control" placeholder="Buscar por nombre">
+        </div>
+        <div class="col-md-3">
+          <label for="filtroRol" class="form-label">Rol</label>
+          <select id="filtroRol" class="form-select">
+            <option value="">Todos</option>
+            {% for rol in roles %}
+            <option value="{{ rol.nombre }}">{{ rol.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="filtroTorre" class="form-label">Torre</label>
+          <select id="filtroTorre" class="form-select">
+            <option value="">Todas</option>
+            {% for torre in torres %}
+            <option value="{{ torre.nombre }}">{{ torre.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="filtroApartamento" class="form-label">Apartamento</label>
+          <select id="filtroApartamento" class="form-select">
+            <option value="">Todos</option>
+            {% for apto in apartamentos %}
+            <option value="{{ apto.numero }}">{{ apto.numero }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </form>
+
+    <!-- Tabla -->
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered align-middle text-center" id="tablaUsuarios">
+        <thead class="table-dark">
+          <tr>
+            <th>Item</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Rol</th>
+            <th>Unidad Residencial</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          {% for usuario in usuarios %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="col-nombre">{{ usuario.nombre }}</td>
+            <td>{{ usuario.email }}</td>
+            <td>{{ usuario.telefono or "No registrado" }}</td>
+            <td class="col-rol">{{ usuario.rol.nombre if usuario.rol else "Sin rol asignado" }}</td>
+            <td class="col-torre-apto"
+              data-torre="{{ usuario.casa.torre.nombre if usuario.casa and usuario.casa.torre else 'N/A' }}"
+              data-apto="{{ usuario.casa.apartamento.numero if usuario.casa and usuario.casa.apartamento else 'N/A' }}">
+              Torre: {{ usuario.casa.torre.nombre if usuario.casa and usuario.casa.torre else 'N/A' }} -
+              Apart: {{ usuario.casa.apartamento.numero if usuario.casa and usuario.casa.apartamento else 'N/A' }}
+
+            </td>
+            <td>
+              <div class="d-flex flex-wrap gap-1 justify-content-center">
+                <a href="{{ url_for('usuarios.editar_usuario', id=usuario.id) }}" class="btn btn-warning btn-sm">
+                  <i class="fas fa-edit"></i> Editar
+                </a>
+
+                {% if usuario.estado == 1 %}
+                <button class="btn btn-danger btn-sm" onclick="confirmarInhabilitacion('{{ usuario.id }}')">
+                  <i class="fas fa-trash-alt"></i> Inhabilitar
+                </button>
+                {% else %}
+                <button class="btn btn-danger btn-sm" onclick="confirmarHabilitacion('{{ usuario.id }}')">
+                  <i class="fas fa-check"></i> Habilitar
+                </button>
+
+                {% endif %}
+
+                <a href="{{ url_for('api_mail.enviar_codigo_admin', id=usuario.id) }}" class="btn btn-secondary btn-sm">
+                  <i class="fas fa-key"></i> Restablecer Contraseña
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <table id="tablaExportar" class="d-none">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Nombre</th>
+            <th>Identificacion</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Rol</th>
+            <th>Torre</th>
+            <th>Apartamento</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for usuario in usuarios %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ usuario.nombre }}</td>
+            <td>{{ usuario.identificacion }}</td>
+            <td>{{ usuario.email }}</td>
+            <td>{{ usuario.telefono or "No registrado" }}</td>
+            <td>{{ usuario.rol.nombre if usuario.rol else "Sin rol asignado" }}</td>
+            <td>{{ usuario.casa.torre.nombre if usuario.casa and usuario.casa.torre else 'N/A' }}</td>
+            <td>{{ usuario.casa.apartamento.numero if usuario.casa and usuario.casa.apartamento else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+
+      <nav>
+        <ul class="pagination" id="paginacionUsuarios"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- SheetJS para exportar -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+
+  function confirmarInhabilitacion(usuarioId) {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Esta acción inhabilitará al usuario.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, Inhabilitar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        let form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('usuarios.inhabilitar', id=0) }}".replace('0', usuarioId);
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  }
+
+  function confirmarHabilitacion(usuarioId) {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Esta acción habilitará al usuario.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, Habilitar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        let form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('usuarios.habilitar', id=0) }}".replace('0', usuarioId);
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  }
+
+  const filasPorPagina = 5;
+  let paginaActual = 1;
+
+  function exportarExcel() {
+    const tabla = document.querySelector("#tablaExportar");
+    const wb = XLSX.utils.table_to_book(tabla, { sheet: "Usuarios" });
+    XLSX.writeFile(wb, "usuarios.xlsx");
+  }
+
+  function mostrarPagina(numeroPagina) {
+    paginaActual = numeroPagina;
+    const filas = document.querySelectorAll("#tablaUsuarios tbody tr");
+    const visibles = Array.from(filas).filter(fila => fila.dataset.visible === "true");
+
+    const inicio = (paginaActual - 1) * filasPorPagina;
+    const fin = inicio + filasPorPagina;
+
+    filas.forEach(fila => {
+      fila.style.display = "none"; // Ocultar todo primero
+    });
+
+    visibles.forEach((fila, i) => {
+      if (i >= inicio && i < fin) {
+        fila.style.display = ""; // Solo las que pertenecen a la página actual
+      }
+    });
+
+    generarPaginacion(visibles.length, paginaActual);
+  }
+
+  function generarPaginacion(totalFilas, paginaActual) {
+    const totalPaginas = Math.ceil(totalFilas / filasPorPagina);
+    const contenedor = document.getElementById("paginacionUsuarios");
+    contenedor.innerHTML = "";
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      const li = document.createElement("li");
+      li.className = "page-item" + (i === paginaActual ? " active" : "");
+      li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+      li.addEventListener("click", (e) => {
+        e.preventDefault();
+        mostrarPagina(i);
+      });
+      contenedor.appendChild(li);
+    }
+  }
+
+  function filtrarTabla() {
+    const nombre = document.getElementById("filtroNombre").value.toLowerCase();
+    const rol = document.getElementById("filtroRol").value.toLowerCase();
+    const torre = document.getElementById("filtroTorre").value.toLowerCase();
+    const apto = document.getElementById("filtroApartamento").value.toLowerCase();
+
+    const filas = document.querySelectorAll("#tablaUsuarios tbody tr");
+
+    filas.forEach(fila => {
+      const colNombre = fila.querySelector(".col-nombre").textContent.toLowerCase();
+      const colRol = fila.querySelector(".col-rol").textContent.toLowerCase();
+      const tdUnidad = fila.querySelector(".col-torre-apto");
+      const colTorre = tdUnidad.dataset.torre.toLowerCase();
+      const colApto = tdUnidad.dataset.apto.toLowerCase();
+
+      const matchNombre = !nombre || colNombre.includes(nombre);
+      const matchRol = !rol || colRol.includes(rol);
+      const matchTorre = !torre || colTorre.includes(torre);
+      const matchApto = !apto || colApto.includes(apto);
+
+      fila.dataset.visible = (matchNombre && matchRol && matchTorre && matchApto) ? "true" : "false";
+    });
+
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  }
+
+  document.querySelectorAll('#filtroUsuarios input, #filtroUsuarios select').forEach(input => {
+    input.addEventListener('input', filtrarTabla);
+  });
+
+
+  // Esperar a que la página cargue completamente
+  document.addEventListener("DOMContentLoaded", function () {
+    // Seleccionar todas las alertas
+    const alerts = document.querySelectorAll(".alert");
+
+    // Configurar el tiempo de desaparición (en milisegundos)
+    const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+    alerts.forEach(alert => {
+      // Configurar un temporizador para eliminar la alerta
+      setTimeout(() => {
+        alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+        setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+      }, tiempoDesaparicion);
+    });
+  });
+
+
+  // 👇 Este se ejecuta al cargar la página
+  window.onload = () => {
+    const filas = document.querySelectorAll("#tablaUsuarios tbody tr");
+    filas.forEach(fila => fila.dataset.visible = "true"); // Todas visibles por defecto
+    mostrarPagina(paginaActual);
+  };
+
+</script>
+
+{% endblock %}

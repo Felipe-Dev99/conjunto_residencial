@@ -1,0 +1,73 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Rol</h2>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre del Rol</label>
+            <input type="text" id="nombre" name="nombre" class="form-control" value="{{ rol.nombre }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Permisos</label>
+            <div class="accordion" id="accordionPermisos">
+                {% for tipo, items in permisos|groupby("tipo") %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{ loop.index }}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                            {{ tipo|capitalize }}
+                        </button>
+                    </h2>
+                    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#accordionPermisos">
+                        <div class="accordion-body">
+                            {% for permiso in items %}
+                            <div class="form-check ms-3">
+                                <input class="form-check-input" type="checkbox" name="permisos" value="{{ permiso.id }}" id="permiso_{{ permiso.id }}">
+                                <label class="form-check-label" for="permiso_{{ permiso.id }}">{{ permiso.nombre }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <a href="{{ url_for('config.listar_roles') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+
+<script>
+  // Esperar a que la página cargue completamente
+  document.addEventListener("DOMContentLoaded", function () {
+    // Seleccionar todas las alertas
+    const alerts = document.querySelectorAll(".alert");
+
+    // Configurar el tiempo de desaparición (en milisegundos)
+    const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+    alerts.forEach(alert => {
+      // Configurar un temporizador para eliminar la alerta
+      setTimeout(() => {
+        alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+        setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+      }, tiempoDesaparicion);
+    });
+  });
+</script>
+{% endblock %}

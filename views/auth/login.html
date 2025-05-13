@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        flex: 1; /* Permite que el contenido crezca y empuje el footer hacia abajo */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .login-hero {
+        background: url("{{ url_for('static', filename='img/fondo_conjunto.jpeg') }}") no-repeat center center/cover;
+        min-height: 60vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-grow: 1;
+    }
+
+    .login-overlay {
+        background: rgba(0, 0, 0, 0.5);
+        width: 100%;
+        height: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px 0;
+    }
+
+    .login-card {
+        width: 350px;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+</style>
+
+<div class="content-wrapper">
+    <div class="login-hero">
+        <div class="login-overlay">
+            <div class="card login-card">
+                <div class="text-center">
+                    <h2 class="fw-bold text-primary">🔐 Iniciar Sesión</h2>
+                    <p class="text-muted">Accede a tu cuenta</p>
+                </div>
+
+                <!-- Mensajes Flash -->
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                <div class="alert-container">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} text-center py-2" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <!-- Formulario -->
+                <form id="loginForm" action="/login" method="POST">
+                    <div class="mb-3">
+                        <label class="fw-bold">👤 Usuario:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                            <input type="text" name="username" id="username" class="form-control"
+                                placeholder="Ingresa tu usuario">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold" for="password">🔑 Contraseña:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" name="password" id="password" class="form-control" placeholder="Ingresa tu contraseña">
+                        </div>
+                                                <!-- Checkbox para mostrar/ocultar contraseña -->
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="showPassword" onclick="togglePasswordVisibility()">
+                            <label class="form-check-label" for="showPassword">Mostrar contraseña</label>
+                        </div>
+
+                        
+
+
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right"></i>
+                        Ingresar</button>
+                </form>
+                <div class="text-center mt-2">
+                    <p class="text-muted mb-1">¿Olvidaste tu contraseña?</p>
+                    <a href="/api_mail/enviarCodigo" class="text-primary fw-bold">Recupérala aquí</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Validación en cliente
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!username || !password) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Campos incompletos',
+                text: 'Debes completar usuario y contraseña.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: {
+                    popup: 'colored-toast'
+                }
+            });
+        }
+    });
+
+    // Desaparecer flash messages automáticamente
+    window.addEventListener('load', () => {
+        const flashes = document.querySelectorAll('.alert');
+        flashes.forEach(alert => {
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 4000);
+        });
+    });
+        const passwordInput = document.querySelector('input[type="password"]');
+        const lowerUpper = document.getElementById("lower-upper");
+        const number = document.getElementById("number");
+        const special = document.getElementById("special");
+        const length = document.getElementById("length");
+
+    passwordInput.addEventListener("input", function () {
+        const pwd = passwordInput.value;
+
+        const hasLower = /[a-z]/.test(pwd);
+        const hasUpper = /[A-Z]/.test(pwd);
+        const hasNumber = /\d/.test(pwd);
+        const hasSpecial = /[\^!@#$%&*]/.test(pwd);
+        const hasLength = pwd.length >= 10;
+
+        lowerUpper.classList.toggle("valid", hasLower && hasUpper);
+        number.classList.toggle("valid", hasNumber);
+        special.classList.toggle("valid", hasSpecial);
+        length.classList.toggle("valid", hasLength);
+    });
+
+        
+        // Validaciones visuales
+        lowerUpper.className = hasLower && hasUpper ? "valid" : "invalid";
+        number.className = hasNumber ? "valid" : "invalid";
+        special.className = hasSpecial ? "valid" : "invalid";
+        length.className = hasLength ? "valid" : "invalid";
+
+
+     // Función para alternar la visibilidad de la contraseña
+     function togglePasswordVisibility() {
+        const passwordField = document.getElementById('password');
+        const showPasswordCheckbox = document.getElementById('showPassword');
+        passwordField.type = showPasswordCheckbox.checked ? 'text' : 'password';
+    }
+
+
+  // Esperar a que la página cargue completamente
+  document.addEventListener("DOMContentLoaded", function () {
+    // Seleccionar todas las alertas
+    const alerts = document.querySelectorAll(".alert");
+
+    // Configurar el tiempo de desaparición (en milisegundos)
+    const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+    alerts.forEach(alert => {
+      // Configurar un temporizador para eliminar la alerta
+      setTimeout(() => {
+        alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+        setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+      }, tiempoDesaparicion);
+    });
+  });
+
+    
+</script>
+
+<style>
+     /* Agregar un espacio entre el campo de la contraseña y los requisitos */
+    #password-requirements {
+        margin-top: 15px; /* Espacio arriba de la lista de requisitos */
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem; /* Espacio entre los campos de formulario */
+    }
+    .swal2-popup.colored-toast {
+        background: #f8d7da !important;
+        color: #721c24 !important;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    .valid {
+      color: rgb(78, 227, 78); /* Verde para otros elementos si los usas */
+  }
+
+  .default {
+      color: #6c757d; /* Gris predeterminado */
+  }
+
+  .card {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      word-wrap: break-word;
+    overflow-wrap: break-word;
+
+  }
+
+  #password-strength {
+      padding: 10px;
+      background-color: #ccc;
+      color: black;
+  }
+ 
+  .check-icon {
+      color: #6c757d; /* Chulito gris por defecto */
+      font-weight: bold;
+      margin-right: 5px;
+  }
+
+  .check-icon.valid {
+      color: rgb(22, 78, 22); /* Chulito verde al cumplir condición */
+  }
+  #password-requirements li {
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+  .text-gray {
+      color: #6c757d; /* Texto siempre gris */
+  }
+</style>
+
+{% endblock %}

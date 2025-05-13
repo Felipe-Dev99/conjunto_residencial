@@ -1,0 +1,215 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Facturación{% endblock %}
+
+{% block content %}
+<style>
+    .facturas-container {
+        max-width: 800px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="d-flex justify-content-start mb-3">
+    {% if d == 0 %}
+    <a href="{{ url_for('admin_facturacion.admin_facturas') }}" class="btn btn-success">
+        <i class="fas fa-user-plus"></i> Volver
+    </a>
+    {% else %}
+    <a href="{{ url_for('admin_facturacion.historico_facturas') }}" class="btn btn-success">
+        <i class="fas fa-user-plus"></i> Volver
+    </a>
+    {% endif %}
+</div>
+
+{% with messages = get_flashed_messages(with_categories=True) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- Sección del historial de pagos de administracion -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title text-center text-secondary">📜 Pagos Mes {% set meses = {
+            1: 'Enero',
+            2: 'Febrero',
+            3: 'Marzo',
+            4: 'Abril',
+            5: 'Mayo',
+            6: 'Junio',
+            7: 'Julio',
+            8: 'Agosto',
+            9: 'Septiembre',
+            10: 'Octubre',
+            11: 'Noviembre',
+            12: 'Diciembre'
+            } %}
+            {{ meses[factura.mes] }} - Año {{factura.year}}</h5>
+
+        {% if historial %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mt-3">
+                <thead class="table-primary text-center">
+                    <tr>
+                        <th>Item</th>
+                        <th>Consecutivo</th>
+                        <th>Monto Pagado</th>
+                        <th>Tipo de Pago</th>
+                        <th>Estado</th>
+                        <th>Comprobante</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    {% for pago in historial %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ pago.consecutivo_pago }}</td>
+                        <td><strong>${{ "{:,.2f}".format(pago.monto_pagado) }}</strong></td>
+
+                        <td><strong>{{ pago.tipo_pago }}</strong></td>
+                        <td>
+                            {% if pago.estado == 'Pagado' %}
+                            <span class="badge bg-success">{{ pago.estado }}</span>
+                            {% elif pago.estado == 'Pendiente' %}
+                            <span class="badge bg-warning">{{ pago.estado }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ pago.estado }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if pago.comprobante_original %}
+                            <a href="{{ url_for('admin_facturacion.ver_comprobante1', id=pago.id) }}" target="_blank"
+                                class="btn btn-info btn-sm">
+                                <i class="bi bi-eye"></i> Ver Comprobante
+                            </a>
+                            {% else %}
+                            Sin Comprobante
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if pago.estado == "En espera de comprobación" %}
+                            <!-- Botón que lanza el modal Aprobacion -->
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#aprobarModal{{ pago.id }}">
+                                Aprobar
+                            </button>
+
+                            <!-- Modal Aprobacion-->
+                            <div class="modal fade" id="aprobarModal{{ pago.id }}" tabindex="-1"
+                                aria-labelledby="rechazoModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form method="POST"
+                                        action="{{ url_for('admin_facturacion.aprobar_pago', factura_id=factura.id) }}"
+                                        method="GET">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title" id="rechazoModalLabel">Aprobar Pago</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Cerrar"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="nota" class="form-label">Motivo de Aprobacion:</label>
+                                                    <textarea name="nota" class="form-control" required></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-danger">Confirmar
+                                                    Aprobacion</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+
+
+                            <!-- Botón que lanza el modal Rechazo-->
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#rechazoModal{{ pago.id }}">
+                                Rechazar
+                            </button>
+
+
+                            <!-- Modal Rechazo-->
+                            <div class="modal fade" id="rechazoModal{{ pago.id }}" tabindex="-1"
+                                aria-labelledby="rechazoModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form
+                                        action="{{ url_for('admin_facturacion.rechazar_pago', factura_id=factura.id) }}"
+                                        method="POST">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title" id="rechazoModalLabel">Rechazar Pago</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Cerrar"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="nota" class="form-label">Motivo del rechazo:</label>
+                                                    <textarea name="nota" class="form-control" required></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            {% else %}
+
+                            <span class="badge bg-success">{{ pago.estado }}</span>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted">No se han registrado pagos aún para esta factura.</p>
+        {% endif %}
+    </div>
+</div>
+
+</div>
+
+<script>
+  // Esperar a que la página cargue completamente
+  document.addEventListener("DOMContentLoaded", function () {
+    // Seleccionar todas las alertas
+    const alerts = document.querySelectorAll(".alert");
+
+    // Configurar el tiempo de desaparición (en milisegundos)
+    const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+    alerts.forEach(alert => {
+      // Configurar un temporizador para eliminar la alerta
+      setTimeout(() => {
+        alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+        setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+      }, tiempoDesaparicion);
+    });
+  });
+</script>
+{% endblock %}

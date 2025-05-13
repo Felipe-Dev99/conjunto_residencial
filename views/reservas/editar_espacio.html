@@ -1,0 +1,30 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Espacio de Reserva</h2>
+    <form action="{{ url_for('config.editar_espacio', id=espacio.id) }}" method="POST">
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre del Espacio</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ espacio.nombre }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="descripcion" name="descripcion">{{ espacio.descripcion }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="capacidad" class="form-label">Valor</label>
+            <input type="number" class="form-control" id="capacidad" name="capacidad" value="{{ espacio.valor }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="estado" class="form-label">Estado</label>
+            <select class="form-control" id="estado" name="estado">
+                <option value="1" {% if espacio.estado %}selected{% endif %}>Activo</option>
+                <option value="0" {% if not espacio.estado %}selected{% endif %}>Inactivo</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <a href="{{ url_for('config.listar_espacios') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

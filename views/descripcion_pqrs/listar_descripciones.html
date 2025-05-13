@@ -1,0 +1,112 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Lista de Descripciones de PQRS</h2>  <!-- Centré el título -->
+    
+    <!-- Ajusté el margen para bajar los botones -->
+    <div class="mb-3">
+        <a href="{{ url_for('config.nueva_descripcion') }}" class="btn btn-primary">Nueva Descripción</a>
+        <a href="{{ url_for('config.configuracion') }}" class="btn btn-secondary">Volver</a>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th class="text-center align-middle">#</th>  
+                <th class="text-center align-middle">Tipo</th>  
+                <th class="text-center align-middle">Descripción</th>  
+                <th class="text-center align-middle">Tipo de PQRS</th>  
+                <th class="text-center align-middle">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="reservasTableBody">
+            {% for descripcion in descripciones %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ descripcion.tipo }}</td>
+                <td>{{ descripcion.descripcion }}</td>
+                <td>{{ descripcion.tipo_pqrs.nombre }}</td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('config.editar_descripcion', id=descripcion.id) }}"
+                            class="btn btn-sm" style="background-color: #ffc107; color: black;">Editar</a>
+                        <button type="button" class="btn btn-sm" style="background-color: #dc3545; color: white;" data-bs-toggle="modal"
+                            data-bs-target="#modalEliminar{{ descripcion.id }}">
+                            Eliminar
+                        </button>
+                    </div>
+                    <!-- Modal -->
+                    <div class="modal fade" id="modalEliminar{{ descripcion.id }}" tabindex="-1"
+                        aria-labelledby="modalEliminarLabel{{ descripcion.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title" id="modalEliminarLabel{{ descripcion.id }}">Confirmar
+                                        Eliminación</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Cerrar"></button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Estás seguro de que deseas eliminar esta descripción?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancelar</button>
+                                    <form action="{{ url_for('config.eliminar_descripcion', id=descripcion.id) }}"
+                                        method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Paginación -->
+    <nav>
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+    </nav>
+</div>
+
+<script>
+    let itemsPorPagina = 10;  // Cambié aquí a 10 elementos por página
+    let tabla = document.querySelector("#reservasTableBody");
+    let filas = Array.from(tabla.getElementsByTagName("tr"));
+    let paginacion = document.querySelector("#pagination");
+
+    function mostrarPagina(pagina) {
+        let inicio = (pagina - 1) * itemsPorPagina;
+        let fin = inicio + itemsPorPagina;
+        filas.forEach((fila, index) => {
+            fila.style.display = (index >= inicio && index < fin) ? "" : "none";
+        });
+    }
+
+    function generarPaginacion() {
+        let totalPaginas = Math.ceil(filas.length / itemsPorPagina);
+        paginacion.innerHTML = "";
+        if (totalPaginas <= 1) return;
+        for (let i = 1; i <= totalPaginas; i++) {
+            let li = document.createElement("li");
+            li.className = "page-item";
+            let a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.innerText = i;
+            a.onclick = function () { mostrarPagina(i); return false; };
+            li.appendChild(a);
+            paginacion.appendChild(li);
+        }
+    }
+
+    // Generar la paginación al cargar la página
+    generarPaginacion();
+    mostrarPagina(1); // Muestra la primera página por defecto
+</script>
+{% endblock %}

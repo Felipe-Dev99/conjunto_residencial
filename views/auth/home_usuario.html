@@ -1,0 +1,41 @@
+{% extends "base_usuario.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<style>
+    .hero {
+        background: url("{{ url_for('static', filename='img/fondo_conjunto.jpeg') }}") no-repeat center center/cover;
+        min-height: 60vh; /* Reducimos el tamaño para que el footer tenga espacio */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        text-align: center;
+        position: relative;
+    }
+
+    .hero-content {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    /* Forzar que el footer esté visible */
+    .content-wrapper {
+        flex: 1; /* Hace que el contenido principal crezca y deje espacio para el footer */
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+
+<div class="content-wrapper">
+    <div class="hero">
+        <div class="hero-content">
+            <h1 class="fw-bold">Bienvenido al Conjunto Residencial El Dorado</h1>
+            <p class="lead">Administra fácilmente tus Reservas, PQRS y Pagos de Administración.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

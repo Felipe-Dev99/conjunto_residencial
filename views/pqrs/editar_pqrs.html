@@ -1,0 +1,124 @@
+{% extends 'base_usuario.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar PQRS</h2>
+
+    <!-- Mensajes de alerta -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('pqrs.editar_pqrs', pqrs_id=pqrs.id) }}">
+
+        <!-- Selector de Tipo de PQRS -->
+        <div class="mb-3">
+            <label for="id_tipo" class="form-label">Tipo de PQRS</label>
+            <select class="form-select" id="id_tipo" name="id_tipo">
+                <option value="">Seleccione un tipo</option>
+                {% for tipo in tipos_pqrs %}
+                <option value="{{ tipo.id }}" {% if tipo.id==pqrs.id_tipo %}selected{% endif %}>{{ tipo.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Selector de Descripción (Se llena dinámicamente según el Tipo seleccionado) -->
+        <div class="mb-3">
+            <label for="id_descripcion" class="form-label">Descripción</label>
+            <select name="id_descripcion" id="id_descripcion" class="form-control">
+                <option value="">Seleccione una descripción</option>
+                {% for descripcion in descripciones_pqrs %}
+                <option value="{{ descripcion.id }}" {% if descripcion.id==pqrs.tipo %}selected{% endif %}>{{
+                    descripcion.tipo}}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+
+        <div class="mb-3">
+            <label for="descripcion_texto">Detalles de la descripción:</label>
+            <textarea id="descripcion_texto" name="descripcion_texto" class="form-control" rows="4" disabled
+                readonly></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label"><strong>Observación:</strong></label>
+            <textarea class="form-control" rows="2">{{ pqrs.observacion }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Adjuntar soporte (opcional):</label>
+
+            <input type="file" name="archivo" accept=".pdf,.jpg,.png,.jpeg" class="form-control form-control-sm mb-2">
+
+        </div>
+        <button type="submit" class="btn btn-success">Actualizar Solicitud</button>
+        <a href="{{ url_for('pqrs.listar') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+
+<script>
+    document.getElementById("id_tipo").addEventListener("change", function () {
+        let tipo_id = this.value;
+
+        fetch("/pqrs/obtener_descripciones/" + tipo_id)
+            .then(response => response.json())
+            .then(data => {
+                let descripcionSelect = document.getElementById("id_descripcion");
+                let descripcionTexto = document.getElementById("descripcion_texto");
+
+                descripcionSelect.innerHTML = '<option value="">Seleccione una descripción</option>';
+                descripcionTexto.value = "";
+
+                data.forEach(function (descripcion) {
+                    let option = document.createElement("option");
+                    option.value = descripcion.id;
+                    option.textContent = descripcion.tipo;
+                    option.dataset.descripcion = descripcion.descripcion;
+                    descripcionSelect.appendChild(option);
+                });
+            });
+    });
+
+    // Evento para mostrar la descripción seleccionada en el cuadro de texto
+    document.getElementById("id_descripcion").addEventListener("change", function () {
+        let descripcionTexto = document.getElementById("descripcion_texto");
+        let selectedOption = this.options[this.selectedIndex];
+
+        if (selectedOption.value) {
+            descripcionTexto.value = selectedOption.dataset.descripcion;
+        } else {
+            descripcionTexto.value = "";
+        }
+    });
+
+
+
+    // Esperar a que la página cargue completamente
+    document.addEventListener("DOMContentLoaded", function () {
+        // Seleccionar todas las alertas
+        const alerts = document.querySelectorAll(".alert");
+
+        // Configurar el tiempo de desaparición (en milisegundos)
+        const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+        alerts.forEach(alert => {
+            // Configurar un temporizador para eliminar la alerta
+            setTimeout(() => {
+                alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+                setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+            }, tiempoDesaparicion);
+        });
+    });
+
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-primary fw-bold">⚙ Configuración del Conjunto Residencial</h2>
+
+
+        <!-- Mensajes de alerta -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('config.gestionar_datos_conjunto') }}" enctype="multipart/form-data">
+            <!-- Nombre del conjunto -->
+            <div class="mb-3">
+                <label for="nombre" class="form-label fw-bold">Nombre del Conjunto</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-home"></i></span>
+                    <input type="text" class="form-control" id="nombre" name="nombre"
+                        value="{{ datos.nombre if datos else '' }}" required>
+                </div>
+            </div>
+            <!-- Dirección -->
+            <div class="mb-3">
+                <label for="direccion" class="form-label fw-bold">Dirección</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                    <input type="text" class="form-control" id="direccion" name="direccion"
+                        value="{{ datos.direccion if datos else '' }}" required>
+                </div>
+            </div>
+            <!-- Teléfono -->
+            <div class="mb-3">
+                <label for="telefono" class="form-label fw-bold">Teléfono</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                    <input type="text" class="form-control" id="telefono" name="telefono"
+                        value="{{ datos.telefono if datos else '' }}" required>
+                </div>
+            </div>
+            <!-- NIT -->
+            <div class="mb-3">
+                <label for="nit" class="form-label fw-bold">NIT</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                    <input type="text" class="form-control" id="nit" name="nit" value="{{ datos.nit if datos else '' }}"
+                        required>
+                </div>
+            </div>
+            <!-- Cuenta bancaria -->
+            <div class="mb-3">
+                <label for="numero_cuenta" class="form-label fw-bold">Número de Cuenta Bancaria</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-university"></i></span>
+                    <input type="text" class="form-control" id="numero_cuenta" name="numero_cuenta"
+                        value="{{ datos.numero_cuenta if datos else '' }}" required>
+                </div>
+            </div>
+            <!-- Código de cuenta -->
+            <div class="mb-3">
+                <label for="codigo_cuenta" class="form-label fw-bold">Código de la empresa</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                    <input type="text" class="form-control" id="codigo_cuenta" name="codigo_cuenta"
+                        value="{{ datos.codigo_cuenta if datos else '' }}" required>
+                </div>
+            </div>
+
+            <!-- Términos y Condiciones -->
+            <div class="mb-3">
+                <label for="terminos_pdf" class="form-label fw-bold">📄 Términos y Condiciones (PDF)</label>
+
+                {% if datos and datos.terminos_pdf %}
+                <!-- Si ya hay un archivo de Términos y Condiciones -->
+                <div class="d-flex mt-2 gap-2">
+                    <a href="{{ url_for('static', filename='configuracion/terminos_condiciones.pdf') }}" target="_blank"
+                        class="btn btn-outline-primary">
+                        Ver Términos
+                    </a>
+                    <a href="{{ url_for('config.eliminar_pdf', tipo='terminos') }}" class="btn btn-outline-danger"
+                        onclick="return confirm('¿Eliminar el PDF de términos y condiciones?')">
+                        Eliminar
+                    </a>
+                </div>
+                {% else %}
+                <!-- Si no hay archivo de Términos y Condiciones -->
+                <input type="file" class="form-control" name="terminos_pdf" accept="application/pdf">
+                {% endif %}
+            </div>
+
+            <!-- Políticas de Privacidad -->
+            <div class="mb-3">
+                <label for="politicas_pdf" class="form-label fw-bold">🔐 Políticas de Privacidad (PDF)</label>
+
+                {% if datos and datos.politicas_pdf %}
+                <!-- Si ya hay un archivo de Políticas de Privacidad -->
+                <div class="d-flex mt-2 gap-2">
+                    <a href="{{ url_for('static', filename='configuracion/politicas_privacidad.pdf') }}" target="_blank"
+                        class="btn btn-outline-primary">
+                        Ver Política
+                    </a>
+                    <a href="{{ url_for('config.eliminar_pdf', tipo='politicas') }}" class="btn btn-outline-danger"
+                        onclick="return confirm('¿Eliminar el PDF de políticas de privacidad?')">
+                        Eliminar
+                    </a>
+                </div>
+                {% else %}
+                <!-- Si no hay archivo de Políticas de Privacidad -->
+                <input type="file" class="form-control" name="politicas_pdf" accept="application/pdf">
+                {% endif %}
+            </div>
+
+
+
+            <div class="d-flex gap-2 justify-content-center">
+                <button type="submit" class="btn btn-primary px-4">Guardar Cambios</button>
+                <a href="{{ url_for('config.configuracion') }}" class="btn btn-secondary px-4">Volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+  // Esperar a que la página cargue completamente
+  document.addEventListener("DOMContentLoaded", function () {
+    // Seleccionar todas las alertas
+    const alerts = document.querySelectorAll(".alert");
+
+    // Configurar el tiempo de desaparición (en milisegundos)
+    const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+    alerts.forEach(alert => {
+      // Configurar un temporizador para eliminar la alerta
+      setTimeout(() => {
+        alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+        setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+      }, tiempoDesaparicion);
+    });
+  });
+</script>
+{% endblock %}

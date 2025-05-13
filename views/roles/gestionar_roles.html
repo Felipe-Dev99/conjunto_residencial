@@ -1,0 +1,124 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-primary fw-bold mb-4">
+            🎭 Gestión de Roles
+        </h2>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Botón para crear un nuevo rol -->
+        <div class="d-flex justify-content-end mb-3">
+            <a href="{{ url_for('config.gestionar_roles') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-plus-circle"></i> Crear Rol
+            </a>
+        </div>
+
+        <h4 class="text-secondary text-center mb-4">📋 Roles Existentes</h4>
+
+        <div class="row">
+            {% for rol in roles %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title text-primary fw-bold">{{ rol.nombre }}</h5>
+                        <p class="card-text text-muted mb-3">
+                            <strong>Permisos:</strong><br>
+                            {{ rol.permisos | map(attribute='nombre') | join(', ') }}
+                        </p>
+                        <div class="mt-auto d-flex justify-content-between">
+                            <button class="btn btn-sm btn-outline-warning"
+                                onclick="confirmarAccion('editar', '{{ rol.id }}', '{{ rol.nombre }}')">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                onclick="confirmarAccion('eliminar', '{{ rol.id }}', '{{ rol.nombre }}')">
+                                <i class="fas fa-trash-alt"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-center text-muted">No hay roles registrados aún.</p>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{{ url_for('config.configuracion') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left-circle"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" id="confirmForm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirmación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmMessage"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function confirmarAccion(accion, id, nombre) {
+        let mensaje = "";
+        let url = "";
+
+        if (accion === 'editar') {
+            mensaje = `¿Seguro que deseas editar el rol <strong>${nombre}</strong>?`;
+            url = `{{ url_for('config.editar_rol', id=0) }}`.replace('0', id);
+        } else if (accion === 'eliminar') {
+            mensaje = `¿Seguro que deseas eliminar el rol <strong>${nombre}</strong>? Esta acción no se puede deshacer.`;
+            url = `/admin/configuracion/roles/eliminar_rol/${id}`;
+        }
+
+        document.getElementById("confirmMessage").innerHTML = mensaje;
+        document.getElementById("confirmForm").action = url;
+
+        let modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
+    }
+
+    // Esperar a que la página cargue completamente
+    document.addEventListener("DOMContentLoaded", function () {
+        // Seleccionar todas las alertas
+        const alerts = document.querySelectorAll(".alert");
+
+        // Configurar el tiempo de desaparición (en milisegundos)
+        const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+        alerts.forEach(alert => {
+            // Configurar un temporizador para eliminar la alerta
+            setTimeout(() => {
+                alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+                setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+            }, tiempoDesaparicion);
+        });
+    });
+
+
+</script>
+{% endblock %}

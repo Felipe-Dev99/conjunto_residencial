@@ -1,0 +1,129 @@
+{% extends "base_usuario.html" %}
+
+{% block title %}Histórico Pagos de Administración{% endblock %}
+
+{% block content %}
+{% set meses = {
+1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+} %}
+
+
+<div class="container mt-5">
+    <div class="text-center mb-4">
+        <h2 class="text-center text-dark mb-4">
+            🧾<i class="fas fa-file-invoice-dollar me-2"></i>Histórico Pagos de Administración
+        </h2>
+    </div>
+
+    <a href="{{ url_for('facturacion.listar_facturas') }}" class="btn btn-success mb-2">
+        <i class="fas fa-user-plus"></i> Volver
+    </a>
+
+    <!-- Formulario de Filtros -->
+    <form method="GET" class="row g-3 align-items-end mb-4">
+        <div class="col-md-3">
+            <label for="year" class="form-label">Año</label>
+            <select class="form-select" name="year" id="year">
+                <option value="">Todos</option>
+                {% for y in anios %}
+                <option value="{{ y }}" {% if request.args.get('year')==y|string %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="mes" class="form-label">Mes</label>
+            <select class="form-select" name="mes" id="mes">
+                <option value="">Todos</option>
+                {% for numero, nombre in meses.items() %}
+                <option value="{{ numero }}" {% if request.args.get('mes')==numero|string %}selected{% endif %}>{{
+                    nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="estado" class="form-label">Estado</label>
+            <select class="form-select" name="estado" id="estado">
+                <option value="">Todos</option>
+                <option value="Aprobado" {% if request.args.get('estado')=='Aprobado' %}selected{% endif %}>Al Día
+                </option>
+                <option value="Pendiente" {% if request.args.get('estado')=='Pendiente' %}selected{% endif %}>Pendiente
+                </option>
+                <option value="Rechazado" {% if request.args.get('estado')=='Rechazado' %}selected{% endif %}>En Mora
+                </option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+        </div>
+    </form>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle text-center">
+            <thead class="table-primary">
+                <tr>
+                    <th>Item</th>
+                    <th>Mes - Año</th>
+                    <th>Fecha Máxima de Pago</th>
+                    <th>Valor</th>
+                    <th>Estado</th>
+                    <th>Opciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set meses = {
+                1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+                5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+                9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+                } %}
+                {% for factura in facturas %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ meses[factura.mes] }} - {{ factura.year }}</td>
+                    <td>{{ factura.fecha_max_pago.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        <strong>Total:</strong> ${{ "{:,.2f}".format(factura.total + (factura.abono or 0)) }}<br>
+                        {% if factura.abono %}
+                        <small class="text-muted">Abono: ${{ "{:,.2f}".format(factura.abono or 0) }}</small><br>
+                        <span class="text-danger fw-bold">Saldo: ${{ "{:,.2f}".format(factura.total) }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if factura.estado == "Aprobado" %}
+                        <span class="badge bg-success">Al Dia</span>
+                        {% elif factura.estado == "Pendiente" %}
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                        {% elif factura.estado == "Rechazado" %}
+                        <span class="badge bg-danger">En Mora</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ factura.estado }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('facturacion.listar_historico', id=factura.id, d=1) }}"
+                            class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> Ver Más
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

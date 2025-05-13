@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .header {
+            background-color: #f4b400;
+            padding: 10px;
+            color: white;
+        }
+
+        .content {
+            margin: 20px;
+        }
+
+        .footer {
+            font-size: 12px;
+            color: gray;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h2>🔔 Notificación del Sistema</h2>
+    </div>
+    <div class="content">
+        {% if tipo == 'abono' %}
+        <p>Se ha realizado un abono por parte de <strong>{{ datos.usuario }}</strong> a la factura del mes de <strong>{{
+                datos.mes }}</strong> por valor de <strong>${{ datos.valor }}</strong>.</p>
+        {% elif tipo == 'pqrs' %}
+        <p>Se ha registrado una nueva PQRS por <strong>{{ datos.usuario }}</strong>: "<em>{{ datos.descripcion }}</em>"
+        </p>
+        {% elif tipo == 'reserva' %}
+        <p><strong>{{ datos.usuario }}</strong> ha reservado el salón comunal para el día <strong>{{ datos.fecha
+                }}</strong> a las <strong>{{ datos.hora }}</strong>.</p>
+
+        {% elif tipo == 'reserva_creada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu solicitud de reserva con radicado <strong>{{ datos.radicado
+                }}</strong> para el <strong>{{ datos.espacio }}</strong> ha sido registrada
+            con éxito para el día <strong>{{ datos.fecha }}</strong> en horario <strong>{{ datos.hora }}</strong>. El
+            estado actual es: <strong>{{ datos.estado }}</strong>.</p>
+
+        {% elif tipo == 'reserva_en_espera' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, se ha recibido el comprobante de pago para tu reserva con radicado
+            <strong>{{ datos.radicado }}</strong> del
+            <strong>{{ datos.fecha }}</strong> en horario <strong>{{ datos.hora }}</strong>. Tu reserva está <strong>{{
+                datos.estado }}</strong>.
+        </p>
+
+        {% elif tipo == 'reserva_editada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu solicitud de reserva con radicado <strong>{{ datos.radicado
+                }}</strong> para el <strong>{{ datos.espacio }}</strong> ha sido
+            se a modificado con éxito del dia <strong>{{ datos.fecha_anterior }}</strong> en horario <strong>{{
+                datos.horario_anterior }} para el día <strong>{{ datos.fecha }}</strong> en horario <strong>{{
+                    datos.hora }}</strong>. El estado
+                actual es: <strong>{{ datos.estado }}</strong>.</p>
+
+        {% elif tipo == 'reserva_aprobada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu reserva con radicado <strong>{{ datos.radicado }}</strong> para
+            el <strong>{{ datos.fecha }}</strong> en horario
+            <strong>{{ datos.hora }}</strong> ha sido <strong>{{ datos.estado }}</strong>. ¡Gracias por usar nuestro
+            sistema!
+        </p>
+        {% elif tipo == 'reserva_rechazada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu reserva con radicado <strong>{{ datos.radicado }}</strong> para
+            el <strong>{{ datos.fecha }}</strong> en horario
+            <strong>{{ datos.hora }}</strong> ha sido <strong>{{ datos.estado }}</strong>, por el motivo de <strong>{{
+                datos.observacion }}</strong>. ¡Gracias por usar nuestro
+            sistema!
+        </p>
+        {% elif tipo == 'reserva_eliminada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu reserva con radicado <strong>{{ datos.radicado }}</strong> para
+            el <strong>{{ datos.espacio }}</strong> para el día <strong>{{ datos.fecha }}</strong> en horario <strong>{{
+                datos.hora }}</strong> se a cancelada con éxito. El estado
+            actual es: <strong>{{ datos.estado }}</strong>.
+        </p>
+        {% elif tipo == 'alerta_reserva_admin' %}
+        <p>Se ha generado una nueva reserva por parte del usuario <strong>{{ datos.usuario }}</strong> para el día
+            <strong>{{ datos.fecha }}</strong> a las <strong>{{ datos.hora }}</strong>. Estado actual: <strong>{{
+                datos.estado }}</strong>.
+        </p>
+
+        {% elif tipo == 'pqrs_creada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu solicitud PQRS con radicado <strong>{{ datos.radicado
+        }}</strong> de tipo <strong>{{ datos.tipop }}</strong> ha sido registrada con éxito. El
+        estado actual es: <strong>{{ datos.estado }}</strong>.</p>
+
+        {% elif tipo == 'pqrs_editada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu solicitud PQRS con radicado <strong>{{ datos.radicado
+        }}</strong> de tipo <strong>{{ datos.tipop }}</strong> ha sido <strong>MODIFICADA</strong> con éxito. El
+        estado actual es: <strong>{{ datos.estado }}</strong>.</p>
+
+        {% elif tipo == 'pqrs_eliminada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu solicitud PQRS con radicado <strong>{{ datos.radicado
+        }}</strong> de tipo <strong>{{ datos.tipop }}</strong> ha sido <strong>ELIMINADA</strong> con éxito. El
+        estado actual es: <strong>{{ datos.estado }}</strong>.</p>
+
+        {% elif tipo == 'pqrs_respuesta' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu solicitud PQRS con radicado <strong>{{ datos.radicado
+        }}</strong> de tipo <strong>{{ datos.tipop }}</strong> tiene una respuesta <strong>{{ datos.respuesta}}</strong>. El
+        estado actual es: <strong>{{ datos.estado }}</strong>.</p>
+
+        {% elif tipo == 'pqrs_asignada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu solicitud PQRS con radicado <strong>{{ datos.radicado
+        }}</strong> de tipo <strong>{{ datos.tipop }}</strong> ha sido asigando a un asistente para darle una pronta respuesta. El
+        estado actual es: <strong>{{ datos.estado }}</strong>.</p>
+
+        {% elif tipo == 'pqrs_vencida' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, tu solicitud PQRS con radicado <strong>{{ datos.radicado
+        }}</strong> de tipo <strong>{{ datos.tipop }}</strong> ha sido cancelada por no haberse respondido a tiempo. El
+        estado actual es: <strong>{{ datos.estado }}</strong>.</p>
+
+        {% elif tipo == 'factura_generada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, se ha ya esta disponible la factura de administracion del mes <strong>{{ datos.mes
+        }} - {{ datos.año}}</strong> por un valor <strong>{{ datos.valor }}</strong> con fecha maxima de pago para el dia <strong>{{ datos.fecha_max_pago }}</strong>.
+
+        {% elif tipo == 'factura_rechada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>,la factura numero <strong>{{ datos.factura}}</strong> correspondiente al mes <strong>{{ datos.mes
+        }} - {{ datos.año}}</strong> por un valor <strong>{{ datos.valor }}</strong> es <strong>RECHAZADA</strong> por el motivo <strong>{{ datos.nota }}</strong>.
+
+        {% elif tipo == 'factura_aprobada' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>,la factura numero <strong>{{ datos.factura}}</strong> correspondiente al mes <strong>{{ datos.mes
+        }} - {{ datos.año}}</strong> por un valor <strong>{{ datos.valor }}</strong> es <strong>APROBADA</strong> por el motivo <strong>{{ datos.nota }}</strong>.
+
+        {% elif tipo == 'factura_padaga' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, la factura correspondiente al mes <strong>{{ datos.mes
+        }} - {{ datos.año}}</strong> se ha cancelado en su totalidad.
+
+        {% elif tipo == 'factura_subida' %}
+        <p>Hola <strong>{{ datos.usuario }}</strong>, la factura numero <strong>{{ datos.factura}}</strong> por el monto <strong>{{ datos.valor}}</strong>
+            queda en estado <strong>{{ datos.estado }}</strong>.</p>.
+
+        {% else %}
+        <p>Se ha registrado una acción en el sistema: <strong>{{ tipo }}</strong>.</p>
+        {% endif %}
+    </div>
+    <div class="footer">
+        <p>Este es un mensaje automático del sistema. Por favor, no responder.</p>
+    </div>
+</body>
+
+</html>

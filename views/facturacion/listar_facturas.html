@@ -1,0 +1,206 @@
+{% extends "base_usuario.html" %}
+{% block content %}
+
+<h2 class="text-center mb-4"><i class="bi bi-receipt-cutoff"></i>📜 Pagos de Administración</h2>
+
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ url_for('facturacion.historico_facturas') }}" class="btn btn-success">
+        <i class="bi bi-clock-history"></i>📜 Historial de Pagos
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=True) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm mb-4" style="border: 2px solid #D8B24A;">
+            <div class="card-header" style="background-color: #D8B24A;">
+                <h5 class="mb-0 text-dark"><i class="bi bi-calendar3"></i> Detalle de Pago</h5>
+            </div>
+            <div class="card-body">
+
+                {% set meses = {
+                1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+                5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+                9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+                } %}
+
+                <p><strong><i class="bi bi-calendar2-week"></i> Mes - Año:</strong> {{ meses[factura.mes] }} - {{
+                    factura.year }}</p>
+                <p><strong><i class="bi bi-alarm"></i> Fecha Máx. de Pago:</strong> {{
+                    factura.fecha_max_pago.strftime('%d/%m/%Y') }}</p>
+
+                {% if ultimaFacturas %}
+                <p><strong><i class="bi bi-cash-coin"></i> Valor Total:</strong> ${{ "{:,.2f}".format(valor_Factura) }}
+                </p>
+                <p><strong><i class="bi bi-wallet2"></i> Abono:</strong> ${{ "{:,.2f}".format(monto_total_pagado) }}</p>
+                <p><strong><i class="bi bi-coin"></i> Saldo Pendiente:</strong> <span class="text-danger">${{
+                        "{:,.2f}".format(saldo_pendiente) }}</span></p>
+                {% else %}
+                <p><strong><i class="bi bi-currency-dollar"></i> Valor Total:</strong> ${{
+                    "{:,.2f}".format(valor_Factura) }}</p>
+                {% endif %}
+
+                <hr>
+
+
+                {% if saldo_pendiente == 0 and factura.estado == "Pendiente" %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-x-circle"></i> Estas al dia, pero tus pagos no estan aprobadas.
+                </div>
+                {% elif saldo_pendiente != 0 %}
+                <form id="form-descargar-factura" method="POST"
+                    action="{{ url_for('facturacion.descargar_factura', id=factura.id) }}">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">$</span>
+                        <input type="number" step="0.01" min="0" max="{{ saldo_pendiente }}" name="abono"
+                            id="input-abono" class="form-control" placeholder="Aplicar abono">
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btn-verificar-descarga"
+                        data-factura-pendiente="{{ 'true' if ultimaFactura and ultimaFactura.estado == 'Pendiente' else 'false' }}">
+                        <i class="bi bi-download"></i> Descargar Recibo
+                    </button>
+                </form>
+
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill"></i> ¡Estás al día!
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <p><strong><i class="bi bi-info-circle"></i> Estado:</strong>
+                    <span class="badge bg-{{ 'success' if factura.estado == 'Pagada' else 'secondary' }}">{{
+                        factura.estado }}</span>
+                </p>
+
+                <a href="{{ url_for('facturacion.listar_historico', id=factura.id, d=0) }}"
+                    class="btn btn-outline-success">
+                    <i class="bi bi-eye"></i> Ver más detalles
+                </a>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="modalConfirmacionLabel"><i class="bi bi-exclamation-triangle"></i> Recibo
+                    ya generado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                Ya tienes un recibo generado en estado pendiente. ¿Deseas reemplazarla?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmarReemplazo">Sí, reemplazar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Error -->
+<div class="modal fade" id="modalErrorAbono" tabindex="-1" aria-labelledby="modalErrorAbonoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalErrorAbonoLabel"><i class="bi bi-exclamation-circle"></i> Error en el
+                    Abono</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                El valor ingresado no puede ser mayor al saldo pendiente de <strong>$<span
+                        id="max-abono-modal"></span></strong>.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-..."
+    crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+    document.getElementById('btn-verificar-descarga').addEventListener('click', function () {
+        const facturaPendiente = this.getAttribute('data-factura-pendiente') === 'true';
+        const abonoInput = document.getElementById('input-abono');
+        const abonoValue = parseFloat(abonoInput.value);
+        const maxAbono = parseFloat(abonoInput.getAttribute('max'));
+
+        // Validar que el abono no exceda el saldo pendiente
+        if (abonoValue > maxAbono) {
+            // Mostrar el modal de error
+            const modalError = new bootstrap.Modal(document.getElementById('modalErrorAbono'));
+            document.getElementById('max-abono-modal').textContent = maxAbono.toFixed(2);
+            modalError.show();
+
+            // Limpiar el campo de abono
+            abonoInput.value = '';
+            return;
+        }
+
+        if (facturaPendiente) {
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
+            modal.show();
+        } else {
+            document.getElementById('form-descargar-factura').submit();
+        }
+    });
+
+    document.getElementById('confirmarReemplazo').addEventListener('click', function () {
+        // Cierra el modal
+        const modalElement = document.getElementById('modalConfirmacion');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        modalInstance.hide();
+
+        // Espera un breve momento para permitir animación de cierre
+        setTimeout(() => {
+            document.getElementById('form-descargar-factura').submit();
+        }, 300);
+    });
+
+
+    // Esperar a que la página cargue completamente
+    document.addEventListener("DOMContentLoaded", function () {
+        // Seleccionar todas las alertas
+        const alerts = document.querySelectorAll(".alert");
+
+        // Configurar el tiempo de desaparición (en milisegundos)
+        const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+        alerts.forEach(alert => {
+            // Configurar un temporizador para eliminar la alerta
+            setTimeout(() => {
+                alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+                setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+            }, tiempoDesaparicion);
+        });
+    });
+
+</script>
+
+
+
+
+{% endblock %}

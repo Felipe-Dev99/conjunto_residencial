@@ -1,0 +1,19 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<h2>Asignar PQRS #{{ pqrs.id }}</h2>
+
+<form method="POST">
+    <div class="mb-3">
+        <label for="id_asistente" class="form-label">Seleccione un Asistente</label>
+        <select name="id_asistente" class="form-select" required>
+            <option value="">Seleccione...</option>
+            {% for asistente in asistentes %}
+                <option value="{{ asistente.id }}">{{ asistente.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Asignar</button>
+    <a href="{{ url_for('admin_pqrs.listar') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

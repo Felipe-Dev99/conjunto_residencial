@@ -1,0 +1,163 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Facturación{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Administración de Pagos</h2>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Formulario de filtros -->
+    <form method="GET" action="{{ url_for('admin_facturacion.admin_facturas') }}" class="mb-4">
+        <div class="row">
+            <!-- Filtro por nombre de usuario -->
+            <div class="col-md-4">
+                <input type="text" name="usuario" class="form-control" placeholder="Nombre de Usuario" value="{{ request.args.get('usuario', '') }}" onchange="this.form.submit()" id="usuarioFiltro">
+            </div>
+    
+            <!-- Filtro por torre -->
+            <div class="col-md-4">
+                <select name="unidad" class="form-control" onchange="this.form.submit()">
+                    <option value="">Seleccione Torre - Apto</option>
+                    {% for torre in torres %}
+                        {% for apartamento in apartamentos %}
+                            <option value="{{ torre.nombre }}-{{ apartamento.numero }}"
+                            {% if request.args.get('unidad') == torre.nombre ~ '-' ~ apartamento.numero %}selected{% endif %}>
+                                Torre {{ torre.nombre }} - Apto {{ apartamento.numero }}
+                            </option>
+                        {% endfor %}
+                    {% endfor %}
+                </select>
+            </div>
+    
+            <!-- Botón de filtro -->
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{{ url_for('admin_facturacion.historico_facturas') }}" class="btn btn-success">
+            <i class="fas fa-user-plus"></i> Historio Pagos
+        </a>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Usuario</th>
+                <th>Unidad Residencial</th>
+                <th>Total</th>
+                <th>Abono</th>
+                <th>Saldo</th>
+                <th>Estado</th>
+                <th>Ver Pagos</th>
+            </tr>
+        </thead>
+        <tbody id="facturasTableBody">
+            {% for factura in facturas %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ factura.usuario_rel.nombre }}</td>
+                <td>Torre {{ factura.usuario_rel.casa.torre.nombre }} - Apto {{ factura.usuario_rel.casa.apartamento.numero }}</td>
+                <td>${{ "{:,.2f}".format(factura.total + (factura.abono or 0)) }}</td>
+                <td>${{ "{:,.2f}".format(factura.abono or 0) }}</td>
+                <td><strong>${{ "{:,.2f}".format(factura.total) }}</strong></td>
+                <td>{{ factura.estado }}</td>
+                <td>
+                    <a href="{{ url_for('admin_facturacion.listar_historico', id=factura.id, d=0) }}" class="btn btn-success">
+                        <i class="fas fa-user-plus"></i> Ver Mas
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">No hay recibos registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+    </nav>
+</div>
+
+<!-- Script para envío automático del filtro -->
+<script>
+    let typingTimer;
+    const typingInterval = 500;
+    const usuarioFiltro = document.getElementById('usuarioFiltro');
+
+    usuarioFiltro.addEventListener('input', function () {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            this.form.submit();
+        }, typingInterval);
+    });
+</script>
+
+<!-- Script de paginación -->
+<script>
+    let itemsPorPagina = 5;
+    let tabla = document.querySelector("#facturasTableBody");
+    let filas = Array.from(tabla.getElementsByTagName("tr"));
+    let paginacion = document.querySelector("#pagination");
+
+    function mostrarPagina(pagina) {
+        let inicio = (pagina - 1) * itemsPorPagina;
+        let fin = inicio + itemsPorPagina;
+        filas.forEach((fila, index) => {
+            fila.style.display = (index >= inicio && index < fin) ? "" : "none";
+        });
+    }
+
+    function generarPaginacion() {
+        let totalPaginas = Math.ceil(filas.length / itemsPorPagina);
+        paginacion.innerHTML = "";
+        if (totalPaginas <= 1) return;
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            let li = document.createElement("li");
+            li.className = "page-item";
+            let a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.innerText = i;
+            a.onclick = function () {
+                mostrarPagina(i);
+                // Marcar como activo
+                document.querySelectorAll("#pagination .page-item").forEach(item => item.classList.remove("active"));
+                li.classList.add("active");
+                return false;
+            };
+            li.appendChild(a);
+            paginacion.appendChild(li);
+        }
+
+        // Activar la primera página por defecto
+        if (paginacion.firstChild) {
+            paginacion.firstChild.classList.add("active");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        generarPaginacion();
+        mostrarPagina(1);
+    });
+</script>
+{% endblock %}

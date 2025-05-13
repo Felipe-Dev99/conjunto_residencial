@@ -1,0 +1,148 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<h2>Usuarios y Registro de Actividad</h2>
+
+<!-- Botón Volver -->
+<div class="text mt-4">
+    <a href="{{ url_for('config.configuracion') }}" class="btn btn-secondary">Volver</a>
+</div>
+
+<!-- Formulario de Filtros -->
+<form method="GET" action="{{ url_for('log.listar_usuarios_logs') }}" class="mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <label for="nombre" class="form-label">Usuario</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" 
+                   value="{{ request.args.get('nombre', '') }}" placeholder="Filtrar por nombre">
+        </div>
+
+        <div class="col-md-3">
+            <label for="torre" class="form-label">Torre</label>
+            <select class="form-select" id="torre" name="torre">
+                <option value="">Todas</option>
+                {% for torre in torres %}
+                    <option value="{{ torre.id }}" {% if request.args.get('torre') == torre.id|string %}selected{% endif %}>
+                        {{ torre.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="apartamento" class="form-label">Apartamento</label>
+            <select class="form-select" id="apartamento" name="apartamento">
+                <option value="">Todos</option>
+                {% for apt in apartamentos %}
+                    <option value="{{ apt.id }}" {% if filtros.apartamento == apt.id|string %}selected{% endif %}>
+                        {{ apt.numero }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="rol" class="form-label">Rol</label>
+            <select class="form-select" id="rol" name="rol">
+                <option value="">Todos</option>
+                {% for rol in roles %}
+                    <option value="{{ rol.id }}" {% if request.args.get('rol') == rol.id|string %}selected{% endif %}>
+                        {{ rol.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('log.listar_usuarios_logs') }}" class="btn btn-secondary">Limpiar</a>
+        </div>
+    </div>
+</form>
+
+<!-- Tabla de Usuarios -->
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Torre</th>
+            <th>Apartamento</th>
+            <th>Rol</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody id="usuariosTableBody">
+        {% for usuario in usuarios %}
+        <tr>
+            <td>{{ usuario.id }}</td>
+            <td>{{ usuario.nombre }}</td>
+            <td>{{ usuario.email }}</td>
+            <td>{{ usuario.casa.torre.nombre if usuario.casa and usuario.casa.torre else 'N/A' }}</td>
+            <td>{{ usuario.casa.apartamento.numero if usuario.casa and usuario.casa.apartamento else 'N/A' }}</td>
+            <td>{{ usuario.rol.nombre if usuario.rol else '-' }}</td>
+            <td>
+                <a href="{{ url_for('log.ver_logs_usuario', id_usuario=usuario.id) }}" class="btn btn-primary">
+                    Ver
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Paginación -->
+<nav aria-label="Paginación">
+    <ul class="pagination justify-content-center mt-3" id="pagination"></ul>
+</nav>
+
+<script>
+    let itemsPorPagina = 10;
+    let tabla = document.querySelector("#usuariosTableBody");
+    let filas = Array.from(tabla.getElementsByTagName("tr"));
+    let paginacion = document.querySelector("#pagination");
+
+    function mostrarPagina(pagina) {
+        let inicio = (pagina - 1) * itemsPorPagina;
+        let fin = inicio + itemsPorPagina;
+        filas.forEach((fila, index) => {
+            fila.style.display = (index >= inicio && index < fin) ? "" : "none";
+        });
+    }
+
+    function generarPaginacion() {
+        let totalPaginas = Math.ceil(filas.length / itemsPorPagina);
+        paginacion.innerHTML = "";
+        if (totalPaginas <= 1) return;
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            let li = document.createElement("li");
+            li.className = "page-item";
+            let a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.innerText = i;
+            a.onclick = function () {
+                mostrarPagina(i);
+                document.querySelectorAll("#pagination .page-item").forEach(item => item.classList.remove("active"));
+                li.classList.add("active");
+                return false;
+            };
+            li.appendChild(a);
+            paginacion.appendChild(li);
+        }
+
+        if (paginacion.firstChild) {
+            paginacion.firstChild.classList.add("active");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        generarPaginacion();
+        mostrarPagina(1);
+    });
+</script>
+{% endblock %}

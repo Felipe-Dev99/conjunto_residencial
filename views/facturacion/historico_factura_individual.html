@@ -1,0 +1,130 @@
+{% extends "base_usuario.html" %}
+
+{% block title %}Pagos de Administración{% endblock %}
+
+{% block content %}
+<style>
+    .facturas-container {
+        max-width: 800px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="d-flex justify-content-start mb-3">
+    {% if d == 0 %}
+    <a href="{{ url_for('facturacion.listar_facturas') }}" class="btn btn-success">
+        <i class="fas fa-user-plus"></i> Volver
+    </a>
+    {% else %}
+    <a href="{{ url_for('facturacion.historico_facturas') }}" class="btn btn-success">
+        <i class="fas fa-user-plus"></i> Volver
+    </a>
+    {% endif %}
+</div>
+
+
+<!-- Sección del historial de facturación -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title text-center text-secondary">📜 Pagos Mes {% set meses = {
+            1: 'Enero',
+            2: 'Febrero',
+            3: 'Marzo',
+            4: 'Abril',
+            5: 'Mayo',
+            6: 'Junio',
+            7: 'Julio',
+            8: 'Agosto',
+            9: 'Septiembre',
+            10: 'Octubre',
+            11: 'Noviembre',
+            12: 'Diciembre'
+            } %}
+            {{ meses[factura.mes] }} - Año {{factura.year}}</h5>
+
+        {% if historial %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mt-3">
+                <thead class="table-primary text-center">
+                    <tr>
+                        <th>#</th>
+                        <th>Consecutivo</th>
+                        <th>Monto Pagado</th>
+                        <th>Tipo de Pago</th>
+                        <th>Fecha de Pago</th>
+                        <th>Estado</th>
+                        <th>Observacion</th>
+                        <th>Comprobante</th>
+                        <th>Fecha de Pago</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    {% for pago in historial %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ pago.consecutivo_pago }}</td>
+                        <td><strong>${{ "{:,.2f}".format(pago.monto_pagado) }}</strong></td>
+
+                        <td><strong>{{ pago.tipo_pago }}</strong></td>
+                        <td>{{ pago.fecha_pago.strftime('%d-%m-%Y') }}</td>
+                        <td>
+                            {% if pago.estado == 'Pagado' %}
+                            <span class="badge bg-success">{{ pago.estado }}</span>
+                            {% elif pago.estado == 'Pendiente' %}
+                            <span class="badge bg-warning">{{ pago.estado }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ pago.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ pago.nota if pago.nota else 'Sin Observación' }}</strong></td>
+
+                        <td>
+                            {% if pago.comprobante_original %}
+                            <a href="{{ url_for('facturacion.ver_comprobante1', id=pago.id) }}" target="_blank"
+                                class="btn btn-info btn-sm">
+                                <i class="bi bi-eye"></i> Ver Comprobante
+                            </a>
+                            {% else %}
+                            {% if d == 0 %}
+                            <form method="POST"
+                                action="{{ url_for('facturacion.subir_comprobante', factura_id=pago.id) }}"
+                                enctype="multipart/form-data" class="form-subir-comprobante d-inline">
+                                <input type="file" name="comprobante" accept=".pdf,.jpg,.png,.jpeg"
+                                    class="form-control form-control-sm mb-2" required>
+                                <button type="submit" class="btn btn-secondary btn-sm">
+                                    <i class="bi bi-upload"></i> Subir
+                                </button>
+                            </form>
+                            {% else %}
+                            Sin Subir
+                            {% endif %}
+                            {% endif %}
+                        </td>
+
+                        <td> {% if pago.fecha_subio_pago %}
+                            {{ pago.fecha_subio_pago.strftime('%d-%m-%Y') }}
+                            {% else %}
+                            -----
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        {% if d == 0 %}
+        <p class="text-center text-muted">No se han registrado pagos aún para esta factura.</p>
+        {% else %}
+        <p class="text-center text-muted">No tienes pagos para <strong>Aprobar</strong> o <strong>Rechazar</strong>.</p>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+</div>
+{% endblock %}

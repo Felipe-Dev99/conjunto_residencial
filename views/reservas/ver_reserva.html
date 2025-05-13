@@ -1,0 +1,152 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Detalles de la Reserva</h2>
+
+    <!-- Mensajes de alerta -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-header">
+            <strong>Número de Radicado:</strong> {{ reserva.numero_radicado }}
+        </div>
+        <div class="card-body">
+            <p><strong>Usuario:</strong> {{ reserva.usuario.nombre }}</p>
+            <p><strong>Unidad Residencial:</strong> Torre: {{ reserva.usuario.casa.torre.nombre }} - Apart: {{
+                reserva.usuario.casa.apartamento.numero }}</p>
+            <p><strong>Fecha:</strong> {{ reserva.fecha }}</p>
+            <p><strong>Horario:</strong> {{ reserva.horario }}</p>
+            <p><strong>Descripción:</strong> {{ reserva.descripcion }}</p>
+            <p><strong>Estado:</strong>
+                <span
+                    class="badge {% if reserva.estado.nombre == 'Pendiente' %}bg-warning{% elif reserva.estado.nombre == 'Aprobado' %}bg-success{% elif reserva.estado.nombre == 'Rechazado' %}bg-danger{% else %}bg-info{% endif %}">
+                    {{ reserva.estado.nombre }}
+                </span>
+            </p>
+            <h5><strong>Comprobante de pago:</strong></h5>
+            {% if reserva.comprobante_pago %}
+
+
+            <a href="{{ url_for('admin_reservas.ver_comprobante', id=reserva.id) }}"
+                class="btn btn-outline-primary btn-sm" target="_blank">
+                Ver Comprobante
+            </a>
+            {% else %}
+            <p class="text-muted"><em>No se ha subido comprobante de pago.</em></p>
+            {% endif %}
+
+            <hr>
+            <h5><strong>Acciones de Confirmación:</strong></h5>
+            {% if reserva.id_estado == 3 %}
+
+
+            <!-- Aprobar -->
+            <button type="button" class="btn btn-success btn-sm me-2" data-bs-toggle="modal"
+                data-bs-target="#modalAprobar">
+                ✔ Aprobar
+            </button>
+
+            <!-- Rechazar -->
+            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalRechazar">
+                ✖ Rechazar
+            </button>
+
+            <!-- Modal Aprobar -->
+            <div class="modal fade" id="modalAprobar" tabindex="-1" aria-labelledby="modalAprobarLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title" id="modalAprobarLabel">Confirmar Aprobación</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <p>¿Estás seguro de que deseas aprobar esta reserva?</p>
+                            <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <form method="POST" action="{{ url_for('admin_reservas.aprobar_reserva', id=reserva.id) }}">
+                                <button type="submit" class="btn btn-success">Sí, Aprobar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Rechazar -->
+            <div class="modal fade" id="modalRechazar" tabindex="-1" aria-labelledby="modalRechazarLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form method="POST" action="{{ url_for('admin_reservas.rechazar_reserva', id=reserva.id) }}">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title" id="modalRechazarLabel">Rechazar Reserva</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Cerrar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Por favor, indica una observación del motivo del rechazo:</p>
+                                <textarea class="form-control" name="observacion" rows="3" required
+                                    placeholder="Motivo del rechazo..."></textarea>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-danger">Rechazar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            {% if reserva.id_estado == 4 %}
+            <p><strong>Observacion de Rechazo:</strong> {{ reserva.observacion }}</p>
+            {% else %}
+            <p><span class="text-muted">Ya ha sido procesada.</span></p>
+            {% endif %}
+            {% endif %}
+
+            <hr>
+
+            <h5><strong>Comprobante de Reserva:</strong></h5>
+            <a href="{{ url_for('reserva.descargar_pdf_pqrs', id=reserva.id) }}" class="btn btn-warning btn-sm">
+                📦 Descargar Comprobante
+            </a>
+        </div>
+    </div>
+
+    <a href="{{ url_for('admin_reservas.listar_reservas_admin') }}" class="btn btn-sm btn-success mt-3">⬅ Volver</a>
+</div>
+
+<script>
+  // Esperar a que la página cargue completamente
+  document.addEventListener("DOMContentLoaded", function () {
+    // Seleccionar todas las alertas
+    const alerts = document.querySelectorAll(".alert");
+
+    // Configurar el tiempo de desaparición (en milisegundos)
+    const tiempoDesaparicion = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 10000 para 10 segundos)
+
+    alerts.forEach(alert => {
+      // Configurar un temporizador para eliminar la alerta
+      setTimeout(() => {
+        alert.classList.add("fade"); // Agregar clase para animación de desvanecimiento
+        setTimeout(() => alert.remove(), 500); // Eliminar el elemento después de la animación
+      }, tiempoDesaparicion);
+    });
+  });
+</script>
+{% endblock %}
